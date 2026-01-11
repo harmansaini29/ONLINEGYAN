@@ -3,237 +3,268 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Play, Pause, Volume2, Settings, Maximize, 
   ChevronLeft, CheckCircle, Lock, FileText, MessageSquare, 
-  ChevronDown, Star, Share2, Bookmark
+  ChevronDown, Star, Bookmark, MoreVertical 
 } from "lucide-react";
+import AIStudyBuddy from "../../components/ai/AIStudyBuddy"; // Integrating our AI
+import { COURSES } from "../../data/mockData"; // Assuming data is centralized
 
-// --- Mock Data ---
-const COURSE_CONTENT = [
-  {
-    title: "Module 1: Fundamentals of UX",
-    duration: "45 min",
-    lessons: [
-      { id: 1, title: "Introduction to User Experience", duration: "10:05", completed: true },
-      { id: 2, title: "The Psychology of Design", duration: "15:20", completed: true },
-      { id: 3, title: "User Research Methods", duration: "12:45", completed: false, current: true },
-    ]
-  },
-  {
-    title: "Module 2: Visual Hierarchy",
-    duration: "1h 20min",
-    lessons: [
-      { id: 4, title: "Typography Mastery", duration: "18:30", completed: false, locked: true },
-      { id: 5, title: "Color Theory in Depth", duration: "22:15", completed: false, locked: true },
-    ]
-  }
-];
+// --- Sub-Component: Video Controls ---
+const VideoControls = ({ isPlaying, onPlayPause }) => (
+  <div className="absolute bottom-6 left-6 right-6 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl p-4 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
+    {/* Progress Bar */}
+    <div className="group/timeline relative w-full h-1 bg-white/20 rounded-full mb-4 cursor-pointer hover:h-2 transition-all">
+      <div className="absolute top-0 left-0 h-full w-[35%] bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full" />
+      <div className="absolute top-1/2 -translate-y-1/2 left-[35%] w-3 h-3 bg-white rounded-full opacity-0 group-hover/timeline:opacity-100 transition-opacity shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+    </div>
+
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-6">
+        <button 
+          onClick={onPlayPause}
+          className="text-white hover:text-indigo-400 transition-colors"
+        >
+          {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+        </button>
+        <div className="flex items-center gap-2 group/vol">
+          <Volume2 size={20} className="text-gray-300 group-hover/vol:text-white" />
+          <div className="w-0 overflow-hidden group-hover/vol:w-20 transition-all duration-300">
+            <div className="w-16 h-1 bg-white/30 rounded-full ml-2">
+              <div className="w-1/2 h-full bg-white rounded-full" />
+            </div>
+          </div>
+        </div>
+        <span className="text-xs font-mono text-gray-300">04:20 / 12:45</span>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button className="text-gray-400 hover:text-white transition-colors"><Settings size={20} /></button>
+        <button className="text-gray-400 hover:text-white transition-colors"><Maximize size={20} /></button>
+      </div>
+    </div>
+  </div>
+);
+
+// --- Sub-Component: Sidebar Tabs ---
+const TabButton = ({ active, label, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`flex-1 py-4 text-sm font-medium border-b-2 transition-all relative ${
+      active ? "border-indigo-500 text-white" : "border-transparent text-gray-500 hover:text-gray-300"
+    }`}
+  >
+    {label}
+    {active && (
+      <motion.div 
+        layoutId="activeTab" 
+        className="absolute inset-0 bg-gradient-to-t from-indigo-500/10 to-transparent" 
+      />
+    )}
+  </button>
+);
 
 export default function VideoPlayerPage() {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [activeTab, setActiveTab] = useState("Overview");
+  const [activeTab, setActiveTab] = useState("Curriculum");
   const [expandedModule, setExpandedModule] = useState(0);
 
+  // Mock Data injected directly for now, but should come from props/context
+  const currentCourse = {
+    title: "Advanced Product Design",
+    lesson: "Lesson 3: User Research Methods",
+    modules: [
+      {
+        title: "Module 1: Fundamentals",
+        lessons: [
+          { id: 1, title: "Intro to UX", duration: "10:05", completed: true },
+          { id: 2, title: "Design Psychology", duration: "15:20", completed: true },
+          { id: 3, title: "User Research Methods", duration: "12:45", current: true },
+        ]
+      },
+      {
+        title: "Module 2: Visual Hierarchy",
+        lessons: [
+          { id: 4, title: "Typography Mastery", duration: "18:30", locked: true },
+          { id: 5, title: "Color Theory", duration: "22:15", locked: true },
+        ]
+      }
+    ]
+  };
+
   return (
-    <div className="h-screen bg-[#0B0C15] flex flex-col text-white overflow-hidden">
+    <div className="h-screen bg-[#0B0C15] flex flex-col text-white overflow-hidden selection:bg-indigo-500/30 font-sans">
       
-      {/* --- NAV BAR --- */}
-      <nav className="h-16 border-b border-white/5 bg-[#0B0C15] flex items-center justify-between px-4 z-20">
+      {/* --- Header --- */}
+      <nav className="h-16 bg-[#0B0C15]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6 z-20">
         <div className="flex items-center gap-4">
-          <button className="p-2 hover:bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors">
-            <ChevronLeft size={20} />
+          <button className="p-2 hover:bg-white/10 rounded-full transition-colors group">
+            <ChevronLeft className="text-gray-400 group-hover:text-white transition-colors" size={20} />
           </button>
           <div>
-            <h1 className="text-sm font-semibold text-white">Advanced Product Design</h1>
-            <p className="text-xs text-gray-500">Lesson 3: User Research Methods</p>
+            <h1 className="text-sm font-bold text-white tracking-tight">{currentCourse.title}</h1>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+              <p className="text-xs text-gray-400">{currentCourse.lesson}</p>
+            </div>
           </div>
         </div>
+        
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-2 text-sm text-gray-400">
-            <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
-              <div className="w-[35%] h-full bg-gradient-to-r from-indigo-500 to-purple-500" />
+          <div className="hidden md:flex flex-col items-end">
+            <span className="text-xs font-medium text-gray-300 mb-1">35% Complete</span>
+            <div className="w-32 h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }} 
+                animate={{ width: "35%" }} 
+                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500" 
+              />
             </div>
-            <span>35% Complete</span>
           </div>
-          <button className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium transition-colors">
-            Share
+          <button className="p-2 text-gray-400 hover:text-white transition-colors">
+            <MoreVertical size={20} />
           </button>
         </div>
       </nav>
 
-      {/* --- MAIN LAYOUT --- */}
+      {/* --- Main Content --- */}
       <div className="flex-1 flex overflow-hidden">
         
-        {/* LEFT: Video Area (Flexible width) */}
-        <main className="flex-1 flex flex-col bg-black relative">
-          <div className="flex-1 relative flex items-center justify-center group">
-            {/* Video Background (Simulated) */}
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black">
-               <img 
-                 src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1600" 
-                 className="w-full h-full object-cover opacity-50" 
-                 alt="Video Thumbnail"
-               />
-            </div>
-            
-            {/* Big Play Button */}
-            <motion.button 
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setIsPlaying(!isPlaying)}
-              className="relative z-10 w-20 h-20 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-[0_0_30px_rgba(255,255,255,0.1)] group-hover:scale-110 transition-transform"
-            >
-              {isPlaying ? <Pause size={32} fill="white" /> : <Play size={32} fill="white" className="ml-1" />}
-            </motion.button>
+        {/* Left: Theater Stage */}
+        <main className="flex-1 bg-black relative flex flex-col items-center justify-center group overflow-hidden">
+          {/* Ambient Glow */}
+          <div className="absolute inset-0 bg-indigo-900/20 blur-[100px] pointer-events-none opacity-50" />
+          
+          <img 
+            src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1600" 
+            className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity duration-500" 
+            alt="Video"
+          />
 
-            {/* Custom Controls Bar (Shows on Hover) */}
-            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/80 to-transparent px-6 flex flex-col justify-end pb-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-               {/* Progress Line */}
-               <div className="w-full h-1 bg-white/20 rounded-full mb-4 cursor-pointer relative group/timeline">
-                 <div className="absolute top-0 left-0 h-full w-[24%] bg-indigo-500 rounded-full" />
-                 <div className="absolute top-1/2 -translate-y-1/2 left-[24%] w-3 h-3 bg-white rounded-full opacity-0 group-hover/timeline:opacity-100 transition-opacity" />
-               </div>
-               
-               <div className="flex items-center justify-between">
-                 <div className="flex items-center gap-4">
-                   <button onClick={() => setIsPlaying(!isPlaying)}>{isPlaying ? <Pause size={20} /> : <Play size={20} />}</button>
-                   <span className="text-xs font-medium">04:20 / 12:45</span>
-                   <Volume2 size={20} className="text-gray-400 hover:text-white" />
-                 </div>
-                 <div className="flex items-center gap-4">
-                   <span className="px-2 py-1 rounded bg-black/50 text-xs font-bold border border-white/10">HD</span>
-                   <Settings size={20} className="text-gray-400 hover:text-white" />
-                   <Maximize size={20} className="text-gray-400 hover:text-white" />
-                 </div>
-               </div>
-            </div>
-          </div>
+          {/* Big Central Play Button */}
+          <motion.button 
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsPlaying(!isPlaying)}
+            className="relative z-10 w-24 h-24 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center text-white shadow-[0_0_60px_rgba(99,102,241,0.3)] group-hover:bg-indigo-600 group-hover:border-indigo-500 transition-all duration-300"
+          >
+            {isPlaying ? <Pause size={32} fill="white" /> : <Play size={32} fill="white" className="ml-2" />}
+          </motion.button>
+
+          <VideoControls isPlaying={isPlaying} onPlayPause={() => setIsPlaying(!isPlaying)} />
+          
+          {/* AI COMPANION OVERLAY */}
+          <AIStudyBuddy />
         </main>
 
-        {/* RIGHT: Course Sidebar (Fixed width) */}
-        <aside className="w-[400px] border-l border-white/5 bg-[#0B0C15] flex flex-col hidden lg:flex">
+        {/* Right: Smart Sidebar */}
+        <aside className="w-96 bg-[#0B0C15] border-l border-white/5 flex flex-col z-10">
           
-          {/* Tabs */}
-          <div className="flex border-b border-white/5">
+          <div className="flex border-b border-white/5 bg-[#0B0C15]/50 backdrop-blur-sm">
             {["Overview", "Curriculum", "Notes"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-4 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab 
-                  ? "border-indigo-500 text-white" 
-                  : "border-transparent text-gray-500 hover:text-gray-300"
-                }`}
-              >
-                {tab}
-              </button>
+              <TabButton 
+                key={tab} 
+                label={tab} 
+                active={activeTab === tab} 
+                onClick={() => setActiveTab(tab)} 
+              />
             ))}
           </div>
 
-          {/* Tab Content Area */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            
-            {/* Overview Tab Content */}
-            {activeTab === "Overview" && (
-              <div className="p-6 animate-in fade-in duration-300">
-                <h2 className="text-xl font-bold mb-2">User Research Methods</h2>
-                <div className="flex items-center gap-2 mb-6">
-                   <div className="flex text-yellow-500">
-                     {[1,2,3,4,5].map(i => <Star key={i} size={14} fill="currentColor" />)}
-                   </div>
-                   <span className="text-xs text-gray-400">(4.9/5)</span>
-                </div>
-                <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                  In this lesson, we break down the fundamental methodologies of user research, including qualitative vs quantitative data, user interviews, and usability testing protocols.
-                </p>
-                <div className="flex gap-4 mb-8">
-                  <div className="flex items-center gap-2 text-sm text-gray-300">
-                    <FileText size={16} className="text-indigo-400" />
-                    <span>Resources (3)</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-300">
-                    <MessageSquare size={16} className="text-indigo-400" />
-                    <span>Q&A (128)</span>
-                  </div>
-                </div>
-                
-                <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-gray-500">Instructor</h3>
-                <div className="flex items-center gap-3">
-                  <img src="https://i.pravatar.cc/150?img=11" className="w-10 h-10 rounded-full border border-white/10" alt="Instructor" />
+          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent p-0">
+            <AnimatePresence mode="wait">
+              
+              {/* --- CURRICULUM TAB --- */}
+              {activeTab === "Curriculum" && (
+                <motion.div 
+                  initial={{ opacity: 0, x: 20 }} 
+                  animate={{ opacity: 1, x: 0 }} 
+                  exit={{ opacity: 0, x: -20 }}
+                  className="pb-20"
+                >
+                  {currentCourse.modules.map((module, idx) => (
+                    <div key={idx} className="border-b border-white/5 last:border-0">
+                      <button 
+                        onClick={() => setExpandedModule(expandedModule === idx ? -1 : idx)}
+                        className="w-full px-6 py-4 flex items-center justify-between bg-[#13141f] hover:bg-[#1A1B26] transition-colors sticky top-0 z-10 border-y border-black/20"
+                      >
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-200">{module.title}</h4>
+                          <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mt-1">{module.lessons.length} Lessons</p>
+                        </div>
+                        <ChevronDown size={16} className={`text-gray-500 transition-transform duration-300 ${expandedModule === idx ? "rotate-180" : ""}`} />
+                      </button>
+                      
+                      <AnimatePresence initial={false}>
+                        {expandedModule === idx && (
+                          <motion.div 
+                            initial={{ height: 0 }} 
+                            animate={{ height: "auto" }} 
+                            exit={{ height: 0 }} 
+                            className="overflow-hidden bg-[#0B0C15]"
+                          >
+                            {module.lessons.map((lesson) => (
+                              <div 
+                                key={lesson.id} 
+                                className={`relative px-6 py-4 flex items-start gap-4 hover:bg-white/5 cursor-pointer transition-all border-l-[3px] ${
+                                  lesson.current 
+                                    ? "border-indigo-500 bg-indigo-500/5" 
+                                    : "border-transparent opacity-80 hover:opacity-100"
+                                }`}
+                              >
+                                <div className="mt-1">
+                                  {lesson.completed ? (
+                                    <div className="bg-emerald-500/10 p-1 rounded-full"><CheckCircle size={14} className="text-emerald-500" /></div>
+                                  ) : lesson.locked ? (
+                                    <Lock size={16} className="text-gray-600" />
+                                  ) : (
+                                    <div className="w-4 h-4 rounded-full border-2 border-indigo-500 mt-1" />
+                                  )}
+                                </div>
+                                <div>
+                                  <p className={`text-sm font-medium leading-tight ${lesson.current ? "text-indigo-300" : "text-gray-300"}`}>
+                                    {lesson.title}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1.5">
+                                    <span className="text-xs text-gray-500">{lesson.duration}</span>
+                                    {lesson.current && <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-500/20">Playing</span>}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+
+              {/* --- OVERVIEW TAB --- */}
+              {activeTab === "Overview" && (
+                <motion.div 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
+                  className="p-6 space-y-6"
+                >
                   <div>
-                    <div className="text-sm font-bold text-white">Alex Morgan</div>
-                    <div className="text-xs text-gray-400">Senior Product Designer @ Google</div>
+                    <h2 className="text-lg font-bold text-white mb-2">About this lesson</h2>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      Deep dive into qualitative vs. quantitative research methods. We will explore how to conduct unbiased user interviews and synthesize data into actionable personas.
+                    </p>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Curriculum Tab Content */}
-            {activeTab === "Curriculum" && (
-              <div className="animate-in fade-in duration-300">
-                {COURSE_CONTENT.map((module, idx) => (
-                  <div key={idx} className="border-b border-white/5 last:border-0">
-                    <button 
-                      onClick={() => setExpandedModule(expandedModule === idx ? -1 : idx)}
-                      className="w-full px-6 py-4 flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors"
-                    >
-                      <div className="text-left">
-                         <h4 className="text-sm font-semibold text-white">{module.title}</h4>
-                         <p className="text-xs text-gray-500 mt-1">{module.lessons.length} Lessons • {module.duration}</p>
-                      </div>
-                      <ChevronDown size={16} className={`text-gray-400 transition-transform ${expandedModule === idx ? "rotate-180" : ""}`} />
-                    </button>
-                    
-                    <AnimatePresence>
-                      {expandedModule === idx && (
-                        <motion.div 
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden"
-                        >
-                          {module.lessons.map((lesson) => (
-                            <div 
-                              key={lesson.id} 
-                              className={`px-6 py-3 flex items-center gap-3 hover:bg-white/5 cursor-pointer transition-colors border-l-2 ${
-                                lesson.current ? "border-indigo-500 bg-white/5" : "border-transparent"
-                              }`}
-                            >
-                              <div className="mt-0.5">
-                                {lesson.completed ? (
-                                  <CheckCircle size={16} className="text-emerald-500" />
-                                ) : lesson.locked ? (
-                                  <Lock size={16} className="text-gray-600" />
-                                ) : (
-                                  <div className="w-4 h-4 rounded-full border-2 border-indigo-500" />
-                                )}
-                              </div>
-                              <div className="flex-1">
-                                <p className={`text-sm ${lesson.current ? "text-indigo-400 font-medium" : "text-gray-300"}`}>
-                                  {lesson.title}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-0.5">{lesson.duration}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                  
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Resources</h3>
+                    <div className="flex items-center gap-3 text-sm text-indigo-300 hover:text-white cursor-pointer transition-colors">
+                      <FileText size={16} />
+                      <span>Research_Template.fig</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-indigo-300 hover:text-white cursor-pointer transition-colors">
+                      <FileText size={16} />
+                      <span>Interview_Script.pdf</span>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {/* Notes Tab Content */}
-            {activeTab === "Notes" && (
-               <div className="p-6 flex flex-col items-center justify-center h-64 text-center animate-in fade-in duration-300">
-                 <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4 text-gray-500">
-                   <Bookmark size={20} />
-                 </div>
-                 <h3 className="text-white font-medium mb-1">No Notes Yet</h3>
-                 <p className="text-gray-500 text-sm mb-4">Click the bookmark icon at any timestamp to add a note.</p>
-                 <button className="px-4 py-2 bg-indigo-600 rounded-lg text-sm font-medium">Create Note</button>
-               </div>
-            )}
-
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </aside>
       </div>

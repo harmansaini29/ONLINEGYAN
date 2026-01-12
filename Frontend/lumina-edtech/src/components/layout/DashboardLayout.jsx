@@ -1,16 +1,29 @@
 import React from "react";
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LogOut, Search, Bell, Menu } from "lucide-react";
-import { SIDEBAR_ITEMS, CURRENT_USER } from "../../data/mockData"; // Using centralized data
+import { Search, Bell, LogOut } from "lucide-react";
+import { INSTRUCTOR_SIDEBAR, LEARNER_SIDEBAR, CURRENT_USER } from "../../data/mockData"; 
 
 export default function DashboardLayout() {
+  const navigate = useNavigate();
+  // Get role from localStorage, fallback to mock data if simple refresh
+  const storedRole = JSON.parse(localStorage.getItem("role"));
+  const role = storedRole || CURRENT_USER.role;
+  
+  const sidebarItems = role === 'instructor' ? INSTRUCTOR_SIDEBAR : LEARNER_SIDEBAR;
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-[#0B0C15] text-white font-sans flex overflow-hidden selection:bg-indigo-500/30">
       
       {/* Sidebar */}
       <aside className="w-72 border-r border-white/5 bg-[#0B0C15] flex-col hidden lg:flex relative z-20">
-        <div className="h-24 flex items-center px-8">
+        <div className="h-24 flex items-center px-8 cursor-pointer" onClick={() => navigate('/')}>
            <div className="flex items-center gap-3">
              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
                <span className="font-bold text-xl">L</span>
@@ -20,7 +33,7 @@ export default function DashboardLayout() {
         </div>
 
         <nav className="p-4 space-y-1 flex-1">
-          {SIDEBAR_ITEMS.map((item) => (
+          {sidebarItems.map((item) => (
             <NavLink 
               key={item.path}
               to={item.path}
@@ -44,24 +57,20 @@ export default function DashboardLayout() {
               )}
             </NavLink>
           ))}
+          
+          {/* Logout Button */}
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors mt-4"
+          >
+            <LogOut size={20} />
+            <span className="font-medium text-sm">Sign Out</span>
+          </button>
         </nav>
-        
-        {/* User Mini Profile in Sidebar */}
-        <div className="p-4 m-4 rounded-2xl bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border border-white/5">
-          <div className="flex items-center gap-3">
-            <img src={CURRENT_USER.avatar} className="w-10 h-10 rounded-full border border-white/10" alt="User" />
-            <div className="overflow-hidden">
-              <h4 className="text-sm font-bold truncate">{CURRENT_USER.name}</h4>
-              <p className="text-xs text-indigo-400 truncate">{CURRENT_USER.role}</p>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[url('https://grainy-gradients.vercel.app/noise.svg')]">
-        
-        {/* Header */}
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[#0B0C15]">
         <header className="h-24 flex items-center justify-between px-8 z-10">
           <div className="relative w-96 hidden md:block group">
              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
@@ -71,20 +80,11 @@ export default function DashboardLayout() {
                className="w-full bg-[#1A1B26] border border-white/5 rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
              />
           </div>
-          
-          <div className="flex items-center gap-6">
-            <button className="relative p-2 text-gray-400 hover:text-white transition-colors">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-            </button>
-          </div>
         </header>
 
-        {/* Dynamic Page Content */}
         <div className="flex-1 overflow-y-auto px-8 pb-8 scrollbar-hide">
-          <Outlet /> {/* Renders the child route (InstructorDashboard etc) */}
+          <Outlet />
         </div>
-
       </main>
     </div>
   );

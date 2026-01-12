@@ -1,45 +1,41 @@
+import React from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Play, CheckCircle, Star } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
-import React, { useEffect, useState } from "react";
 
-
-// 1. Navbar needs to contain the hook logic
+// 1. Functional Navbar Component
 const Navbar = () => {
   const navigate = useNavigate();
-
-  const handleLogin = () => {
-    console.log("login clicked");
-    navigate('/auth');
-  };
-
-  const handleregister = () => {
-    console.log("register clicked");
-    navigate('/register');
-  }
 
   return (
     <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#0B0C15]/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        
+        {/* Brand Logo - Click to refresh/home */}
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-white">L</div>
           <span className="text-xl font-bold text-white tracking-tight">Lumina</span>
         </div>
 
+        {/* Desktop Menu Links */}
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
-          <a href="#" className="hover:text-white transition-colors">Courses</a>
-          <a href="#" className="hover:text-white transition-colors">Mentors</a>
-          <a href="#" className="hover:text-white transition-colors">Pricing</a>
+          <button onClick={() => navigate('/learner/marketplace')} className="hover:text-white transition-colors">Courses</button>
+          <button onClick={() => navigate('/mentors')} className="hover:text-white transition-colors">Mentors</button>
+          <button onClick={() => navigate('/pricing')} className="hover:text-white transition-colors">Pricing</button>
         </div>
 
+        {/* Action Buttons */}
         <div className="flex items-center gap-4">
           <button
+            onClick={() => navigate('/auth')}
             className="text-sm font-medium text-white hover:text-indigo-300 transition-colors"
-            onClick={handleLogin}
           >
             Log In
           </button>
-          <button className="px-5 py-2 rounded-full bg-white text-black text-sm font-semibold hover:bg-gray-200 transition-colors" onClick={handleregister}>
+          <button 
+            onClick={() => navigate('/auth')} 
+            className="px-5 py-2 rounded-full bg-white text-black text-sm font-semibold hover:bg-gray-200 transition-colors"
+          >
             Join Free
           </button>
         </div>
@@ -48,7 +44,7 @@ const Navbar = () => {
   );
 };
 
-// 2. FeatureCard remains a simple presentational component
+// 2. Simple Feature Card
 const FeatureCard = ({ title, desc, icon: Icon }) => (
   <div className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-indigo-500/50 transition-all group hover:-translate-y-1">
     <div className="w-12 h-12 rounded-lg bg-indigo-500/20 flex items-center justify-center mb-4 text-indigo-400 group-hover:text-indigo-300 group-hover:bg-indigo-500/30 transition-colors">
@@ -59,30 +55,24 @@ const FeatureCard = ({ title, desc, icon: Icon }) => (
   </div>
 );
 
+// 3. Main Page Logic
 export default function LandingPage() {
+  const navigate = useNavigate();
 
-  const [user, setuser] = useState("");
-  const [role, setrole] = useState("");
+  // Smart Redirection Logic
+  const handleStartLearning = () => {
+    // Check if user is already logged in
+    const user = JSON.parse(localStorage.getItem("user"));
+    const role = JSON.parse(localStorage.getItem("role")); // "learner" or "instructor"
 
-
-  useEffect(() => {
-    if(localStorage.getItem("user")){
-      setuser(JSON.parse(localStorage.getItem("user")))
-      setrole(JSON.parse(localStorage.getItem("role")))
+    if (user && role === "learner") {
+      navigate('/learner/marketplace'); // Student goes to course catalog
+    } else if (user && role === "instructor") {
+      navigate('/instructor/dashboard'); // Teacher goes to dashboard
+    } else {
+      navigate('/auth'); // New user goes to login/signup
     }
-  }, [])
-
-  const handlehome = ()=>{
-    if(user && user.role=="learner"){
-      navigate('/course/watch');
-    }
-    else if(user && user.role=="instructor"){
-      navigate('/instructor/dashboard');
-    }
-    else{
-      navigate('/auth');
-    }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-[#0B0C15] text-white font-sans overflow-x-hidden selection:bg-indigo-500/30">
@@ -90,7 +80,7 @@ export default function LandingPage() {
 
       {/* --- HERO SECTION --- */}
       <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-6">
-        {/* Ambient Background Mesh - Replaced custom class with standard Tailwind for safety */}
+        {/* Background Mesh */}
         <div className="absolute top-0 left-0 right-0 h-[800px] bg-gradient-to-b from-indigo-900/20 to-transparent opacity-40 pointer-events-none" />
 
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative z-10">
@@ -115,10 +105,15 @@ export default function LandingPage() {
               Experience a learning platform designed for the modern era.
               Cinema-quality courses, interactive mentorship, and a community of high-performers.
             </p>
+            
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="px-8 py-4 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all shadow-[0_0_40px_rgba(99,102,241,0.3)] flex items-center justify-center gap-2" onclick={handlehome}>
+              <button 
+                onClick={handleStartLearning}
+                className="px-8 py-4 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all shadow-[0_0_40px_rgba(99,102,241,0.3)] flex items-center justify-center gap-2"
+              >
                 Start Learning <ArrowRight size={18} />
               </button>
+              
               <button className="px-8 py-4 rounded-full border border-white/10 hover:bg-white/5 text-white font-semibold transition-all flex items-center justify-center gap-2 group">
                 <Play size={18} className="fill-white group-hover:scale-110 transition-transform" />
                 Watch Trailer
@@ -137,14 +132,13 @@ export default function LandingPage() {
             </div>
           </motion.div>
 
-          {/* Right Visual (Abstract UI Mockup) */}
+          {/* Right Visual (3D Tilt Card) */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.2 }}
             className="relative hidden lg:block"
           >
-            {/* Glass Card Container */}
             <div className="relative z-10 p-4 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-2xl shadow-2xl rotate-y-12 rotate-x-6 transform transition-transform duration-500 hover:rotate-0">
               {/* Mock UI Header */}
               <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
@@ -182,8 +176,8 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-
-            {/* Background Glow behind card */}
+            
+            {/* Glow Effect */}
             <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur-3xl opacity-20 -z-10" />
           </motion.div>
         </div>

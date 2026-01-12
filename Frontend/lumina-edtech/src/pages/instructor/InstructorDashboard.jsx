@@ -1,8 +1,9 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, DollarSign, Users, BookOpen, Video, Plus } from "lucide-react";
+import { TrendingUp, DollarSign, Users, BookOpen, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // 1. Import useNavigate
 import SpotlightCard from "../../components/ui/SpotlightCard";
-import { COURSES, CURRENT_USER } from "../../data/mockData";
+import { COURSES, CURRENT_USER } from '../../data/mockData';
 
 // --- Sub-Components ---
 const StatWidget = ({ title, value, change, icon: Icon, color }) => (
@@ -20,9 +21,10 @@ const StatWidget = ({ title, value, change, icon: Icon, color }) => (
   </SpotlightCard>
 );
 
-const RecentCourseRow = ({ course }) => (
+const RecentCourseRow = ({ course, onClick }) => (
   <motion.div 
     whileHover={{ x: 5 }}
+    onClick={onClick} // 2. Make row clickable
     className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer border border-transparent hover:border-white/5"
   >
     <div className="w-12 h-12 rounded-lg bg-gray-800 flex items-center justify-center text-gray-500 shrink-0">
@@ -42,6 +44,8 @@ const RecentCourseRow = ({ course }) => (
 );
 
 export default function InstructorDashboard() {
+  const navigate = useNavigate(); // 3. Initialize Hook
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
@@ -51,7 +55,10 @@ export default function InstructorDashboard() {
           <h1 className="text-2xl font-bold text-white">Dashboard Overview</h1>
           <p className="text-gray-400 text-sm">Welcome back, {CURRENT_USER.name}. Here's your daily breakdown.</p>
         </div>
-        <button className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition-all active:scale-95">
+        <button 
+          onClick={() => navigate('/instructor/create-course')} // 4. Functional Button
+          className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition-all active:scale-95"
+        >
           <Plus size={18} />
           Create New Course
         </button>
@@ -100,10 +107,17 @@ export default function InstructorDashboard() {
             <h3 className="font-semibold text-white mb-6">Recent Courses</h3>
             <div className="space-y-2">
               {COURSES.slice(0, 3).map((course) => (
-                <RecentCourseRow key={course.id} course={course} />
+                <RecentCourseRow 
+                  key={course.id} 
+                  course={course} 
+                  onClick={() => navigate('/instructor/courses')} // 5. Row Click Action
+                />
               ))}
             </div>
-            <button className="w-full py-3 mt-6 text-xs font-medium text-gray-400 hover:text-white border border-dashed border-white/10 hover:border-white/20 rounded-xl transition-all">
+            <button 
+              onClick={() => navigate('/instructor/earnings')} // 6. Functional Link
+              className="w-full py-3 mt-6 text-xs font-medium text-gray-400 hover:text-white border border-dashed border-white/10 hover:border-white/20 rounded-xl transition-all"
+            >
               View All Analytics
             </button>
           </SpotlightCard>

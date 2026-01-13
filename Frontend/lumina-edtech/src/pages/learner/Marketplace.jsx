@@ -4,20 +4,49 @@ import { Search, Bell, PlayCircle, Star, Filter, ChevronRight } from 'lucide-rea
 import { useNavigate } from 'react-router-dom';
 import { COURSES, CURRENT_USER } from '../../data/mockData';
 
-// Navbar Component
-const Nav = () => (
-  <nav className="flex items-center justify-between py-6 px-8 sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/5">
-    <div className="flex items-center gap-12">
-      <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Lumina.</h1>
-    </div>
-    <div className="flex items-center gap-6">
-      <Bell className="w-5 h-5 text-slate-400 hover:text-white cursor-pointer" />
-      <img src={CURRENT_USER.avatar} alt="Profile" className="w-10 h-10 rounded-full border-2 border-slate-700 object-cover" />
-    </div>
-  </nav>
-);
+// --- 1. Navbar Component (Updated for White-Pinkish Theme & Functional Links) ---
+const Nav = () => {
+  const navigate = useNavigate();
+  return (
+    <nav className="flex items-center justify-between py-6 px-8 sticky top-0 z-50 bg-pink-50/90 backdrop-blur-md border-b border-pink-200/50 shadow-sm">
+      <div className="flex items-center gap-12">
+        {/* Logo Text - Click to go home */}
+        <h1 
+          onClick={() => navigate('/')}
+          className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent cursor-pointer"
+        >
+          Lumina.
+        </h1>
+        
+        {/* Navigation Links - FIXED */}
+        <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-500">
+          <button onClick={() => navigate('/learner/marketplace')} className="text-slate-900 font-semibold">Discover</button>
+          <button onClick={() => navigate('/learner/my-learning')} className="hover:text-indigo-600 transition-colors">My Learning</button>
+          <button onClick={() => navigate('/mentors')} className="hover:text-indigo-600 transition-colors">Mentors</button>
+        </div>
+      </div>
 
-// Course Card Component
+      <div className="flex items-center gap-6">
+        {/* Search Bar */}
+        <div className="relative hidden md:block">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input 
+            type="text" 
+            placeholder="Search courses..." 
+            className="bg-white border border-pink-200 rounded-full py-2 pl-10 pr-4 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 w-64 shadow-sm"
+          />
+        </div>
+        
+        {/* Icons */}
+        <Bell className="w-5 h-5 text-slate-500 hover:text-indigo-600 cursor-pointer transition-colors" />
+        
+        <img src={CURRENT_USER.avatar} alt="Profile" className="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover" />
+      </div>
+    </nav>
+  );
+};
+
+// --- 2. Course Card Component ---
 const CourseCard = ({ course, index }) => {
   const navigate = useNavigate();
   return (
@@ -55,11 +84,11 @@ const CourseCard = ({ course, index }) => {
   );
 };
 
+// --- 3. Main Marketplace Page ---
 export default function Marketplace() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  // Filter Logic
   const filteredCourses = COURSES.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           course.instructor.toLowerCase().includes(searchTerm.toLowerCase());

@@ -1,4 +1,4 @@
-import { LayoutDashboard, BookOpen, Users, DollarSign, Settings, Compass, PlayCircle } from "lucide-react";
+import { LayoutDashboard, BookOpen, Users, DollarSign, Settings, Compass, PlayCircle, BarChart } from "lucide-react";
 
 export const CURRENT_USER = {
   name: "Harman Saini",
@@ -11,7 +11,71 @@ export const CURRENT_USER = {
   }
 };
 
-// Helper to generate mock curriculum
+// --- NEW: MENTORS DATA ---
+export const MENTORS = [
+  {
+    id: 1,
+    name: "Dr. Sarah Chen",
+    role: "Senior AI Researcher",
+    company: "Google DeepMind",
+    avatar: "https://i.pravatar.cc/150?img=5",
+    expertise: ["Artificial Intelligence", "Python", "Data Science"],
+    hourlyRate: "$150",
+    rating: "5.0",
+    reviews: 120,
+    available: true
+  },
+  {
+    id: 2,
+    name: "Mark Zuckerberg",
+    role: "Founder & CEO",
+    company: "Meta",
+    avatar: "https://i.pravatar.cc/150?img=3",
+    expertise: ["Entrepreneurship", "Scaling", "Product Management"],
+    hourlyRate: "$5000",
+    rating: "4.9",
+    reviews: 850,
+    available: false
+  },
+  {
+    id: 3,
+    name: "Jessica Pearson",
+    role: "Legal Consultant",
+    company: "Pearson Hardman",
+    avatar: "https://i.pravatar.cc/150?img=9",
+    expertise: ["Corporate Law", "Negotiation", "Public Speaking"],
+    hourlyRate: "$300",
+    rating: "4.8",
+    reviews: 95,
+    available: true
+  }
+];
+
+// --- NEW: ENROLLED COURSES (FOR TRACKING) ---
+export const ENROLLED_COURSES = [
+  {
+    id: 101,
+    title: "Full Stack Web Development",
+    instructor: "Angela Yu",
+    thumbnail: "https://images.unsplash.com/photo-1593720213428-28a5b9e94613?auto=format&fit=crop&w=800&q=80",
+    progress: 75, // Percentage completed
+    totalLessons: 40,
+    completedLessons: 30,
+    lastAccessed: "2 hours ago"
+  },
+  {
+    id: 102,
+    title: "Financial Trading 101",
+    instructor: "Warren Buffet",
+    thumbnail: "https://images.unsplash.com/photo-1611974765270-ca1258822f8f?auto=format&fit=crop&w=800&q=80",
+    progress: 30,
+    totalLessons: 20,
+    completedLessons: 6,
+    lastAccessed: "1 day ago"
+  }
+];
+
+// ... (Keep existing generateCurriculum and COURSES as they are) ...
 const generateCurriculum = (courseTitle) => [
   {
     title: "Module 1: Fundamentals",
@@ -96,5 +160,6 @@ export const INSTRUCTOR_SIDEBAR = [
 export const LEARNER_SIDEBAR = [
   { icon: Compass, label: "Browse", path: "/learner/marketplace" },
   { icon: PlayCircle, label: "My Learning", path: "/learner/my-learning" },
+  { icon: Users, label: "Mentors", path: "/mentors" }, 
   { icon: Settings, label: "Settings", path: "/learner/settings" },
 ];

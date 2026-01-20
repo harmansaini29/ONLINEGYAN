@@ -5,7 +5,7 @@ import { Sparkles, X, Send, Bot } from 'lucide-react';
 export default function AIStudyBuddy() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'ai', text: "Hi! I'm Lumina AI. I'm analyzing this video. Ask me to summarize the key points or explain a concept!" }
+    { role: 'ai', text: "Namaste! I'm Gyan AI. I'm analyzing this video. Ask me to summarize the key points or explain a concept!" }
   ]);
   const [input, setInput] = useState("");
 
@@ -16,9 +16,8 @@ export default function AIStudyBuddy() {
     setMessages(prev => [...prev, { role: 'user', text: input }]);
     setInput("");
     
-    // Simulate AI thinking
     setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'ai', text: "That's a great question about UX Research. The instructor suggests starting with qualitative interviews before moving to quantitative surveys." }]);
+      setMessages(prev => [...prev, { role: 'ai', text: "That's a great question. Based on the current timestamp, the instructor is explaining the core concept of State Management." }]);
     }, 1000);
   };
 
@@ -32,18 +31,16 @@ export default function AIStudyBuddy() {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className="mb-4 w-80 bg-[#1A1B26]/90 backdrop-blur-xl border border-indigo-500/30 rounded-2xl shadow-2xl overflow-hidden"
           >
-            {/* Header */}
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <Bot className="text-white" size={20} />
-                <span className="font-bold text-white text-sm">Neural Tutor</span>
+                <span className="font-bold text-white text-sm">Gyan AI Tutor</span>
               </div>
               <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">
                 <X size={16} />
               </button>
             </div>
-
-            {/* Chat Area */}
+            {/* Chat Area & Input (Same as before) */}
             <div className="h-64 overflow-y-auto p-4 space-y-3 bg-black/20">
               {messages.map((msg, idx) => (
                 <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -55,8 +52,6 @@ export default function AIStudyBuddy() {
                 </div>
               ))}
             </div>
-
-            {/* Input */}
             <form onSubmit={handleSend} className="p-3 border-t border-white/10 flex gap-2">
               <input
                 type="text"
@@ -72,7 +67,6 @@ export default function AIStudyBuddy() {
           </motion.div>
         )}
       </AnimatePresence>
-
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}

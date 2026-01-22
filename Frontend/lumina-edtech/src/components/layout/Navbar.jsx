@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Wallet } from 'lucide-react';
 
 export default function Navbar({ showBack = false, title = "OnlineGyan." }) {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState(null);
+  const [balance, setBalance] = useState(0); // State for Wallet Balance
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -13,7 +14,25 @@ export default function Navbar({ showBack = false, title = "OnlineGyan." }) {
     
     // Check for logged in user
     const storedUser = localStorage.getItem("user");
-    if (storedUser) setUser(JSON.parse(storedUser));
+    if (storedUser) {
+        setUser(JSON.parse(storedUser));
+        
+        // Fetch Wallet Balance
+        const token = localStorage.getItem("token");
+        if (token) {
+            fetch('http://localhost:9000/api/auth/me', {
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Ensure we handle the balance correctly if it exists
+                if (data.wallet_balance !== undefined) {
+                    setBalance(data.wallet_balance);
+                }
+            })
+            .catch(err => console.error("Failed to fetch balance:", err));
+        }
+    }
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -58,10 +77,23 @@ export default function Navbar({ showBack = false, title = "OnlineGyan." }) {
 
         <div className="flex items-center gap-4">
           {user ? (
-             <button onClick={handleDashboardClick} className="group relative px-6 py-2.5 rounded-xl bg-white text-black text-sm font-bold overflow-hidden transition-transform active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-300 to-purple-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="relative z-10">Go to Dashboard</span>
-             </button>
+             <>
+                {/* --- NEW: Wallet Balance Display --- */}
+                <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-[#13141f] border border-white/10 rounded-xl shadow-inner">
+                    <div className="p-1 bg-emerald-500/20 rounded-md">
+                        <Wallet size={14} className="text-emerald-400" />
+                    </div>
+                    <div className="flex flex-col leading-none">
+                        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Balance</span>
+                        <span className="text-sm text-white font-bold">${balance}</span>
+                    </div>
+                </div>
+
+                <button onClick={handleDashboardClick} className="group relative px-6 py-2.5 rounded-xl bg-white text-black text-sm font-bold overflow-hidden transition-transform active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-300 to-purple-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <span className="relative z-10">Go to Dashboard</span>
+                </button>
+             </>
           ) : (
              <>
                <button onClick={() => navigate('/auth')} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Sign In</button>

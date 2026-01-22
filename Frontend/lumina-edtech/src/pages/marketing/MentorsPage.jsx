@@ -105,7 +105,8 @@ export default function MentorsPage() {
             </p>
         </div>
 
-        <motion.div layout className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Updated Grid Layout */}
+        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           <AnimatePresence mode="popLayout">
             {filteredMentors.map((mentor, index) => (
                <MentorCard key={mentor.id} mentor={mentor} index={index} />

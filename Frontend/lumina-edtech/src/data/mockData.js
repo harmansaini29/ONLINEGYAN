@@ -1,4 +1,4 @@
-import { LayoutDashboard, BookOpen, Users, DollarSign, Settings, Compass, PlayCircle, BarChart } from "lucide-react";
+import { LayoutDashboard, BookOpen, Users, DollarSign, Settings, Compass, PlayCircle, Wallet } from "lucide-react";
 
 export const CURRENT_USER = {
   name: "Harman Saini",
@@ -11,7 +11,7 @@ export const CURRENT_USER = {
   }
 };
 
-// --- NEW: MENTORS DATA ---
+// --- MENTORS DATA ---
 export const MENTORS = [
   {
     id: 1,
@@ -51,14 +51,14 @@ export const MENTORS = [
   }
 ];
 
-// --- NEW: ENROLLED COURSES (FOR TRACKING) ---
+// --- ENROLLED COURSES ---
 export const ENROLLED_COURSES = [
   {
     id: 101,
     title: "Full Stack Web Development",
     instructor: "Angela Yu",
     thumbnail: "https://images.unsplash.com/photo-1593720213428-28a5b9e94613?auto=format&fit=crop&w=800&q=80",
-    progress: 75, // Percentage completed
+    progress: 75,
     totalLessons: 40,
     completedLessons: 30,
     lastAccessed: "2 hours ago"
@@ -75,7 +75,7 @@ export const ENROLLED_COURSES = [
   }
 ];
 
-// ... (Keep existing generateCurriculum and COURSES as they are) ...
+// --- CURRICULUM GENERATOR ---
 const generateCurriculum = (courseTitle) => [
   {
     title: "Module 1: Fundamentals",
@@ -149,6 +149,7 @@ export const COURSES = [
   },
 ];
 
+// --- SIDEBAR CONFIGURATION ---
 export const INSTRUCTOR_SIDEBAR = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/instructor/dashboard" },
   { icon: BookOpen, label: "My Courses", path: "/instructor/courses" },
@@ -160,6 +161,7 @@ export const INSTRUCTOR_SIDEBAR = [
 export const LEARNER_SIDEBAR = [
   { icon: Compass, label: "Browse", path: "/learner/marketplace" },
   { icon: PlayCircle, label: "My Learning", path: "/learner/my-learning" },
+  { icon: Wallet, label: "Add Credits", path: "/learner/refill" }, // Updated Link
   { icon: Users, label: "Mentors", path: "/mentors" }, 
   { icon: Settings, label: "Settings", path: "/learner/settings" },
 ];

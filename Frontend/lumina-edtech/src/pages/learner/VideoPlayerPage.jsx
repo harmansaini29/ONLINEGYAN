@@ -1,31 +1,60 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, ChevronLeft, ChevronDown, CheckCircle, Lock, BookOpen, FileText } from "lucide-react";
+import { Play, ChevronLeft, ChevronDown, CheckCircle, BookOpen, FileText, Loader } from "lucide-react";
 import { useParams, useNavigate } from 'react-router-dom';
 import AIStudyBuddy from "../../components/ai/AIStudyBuddy";
-import { COURSES } from '../../data/mockData';
-import NotesPanel from "../../components/features/NotesPanel"; // Import the new feature
+import NotesPanel from "../../components/features/NotesPanel";
 
 export default function VideoPlayerPage() {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const [isPlaying, setIsPlaying] = useState(false);
   const [expandedModule, setExpandedModule] = useState(0);
-  const [currentCourse, setCurrentCourse] = useState(null);
   
-  // NEW: State for sidebar tab
-  const [activeTab, setActiveTab] = useState('curriculum'); // 'curriculum' | 'notes'
+  // Real Data State
+  const [currentCourse, setCurrentCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeLesson, setActiveLesson] = useState(null); // Track which video is playing
+  
+  const [activeTab, setActiveTab] = useState('curriculum'); 
 
   useEffect(() => {
-    const course = COURSES.find(c => c.id === parseInt(courseId));
-    if (course) {
-      setCurrentCourse(course);
-    } else {
-      navigate('/learner/marketplace');
-    }
+    const fetchCourseDetails = async () => {
+        try {
+            const res = await fetch(`http://localhost:9000/api/courses/${courseId}`);
+            if (!res.ok) throw new Error("Course not found");
+            const data = await res.json();
+            
+            setCurrentCourse(data);
+            // Default to first lesson of first module if available
+            if(data.modules?.[0]?.lessons?.[0]) {
+                setActiveLesson(data.modules[0].lessons[0]);
+            }
+        } catch (err) {
+            console.error(err);
+            navigate('/learner/marketplace');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchCourseDetails();
   }, [courseId, navigate]);
 
-  if (!currentCourse) return <div className="h-screen bg-black text-white flex items-center justify-center">Loading...</div>;
+  // Helper to get embed URL
+  const getEmbedUrl = (url) => {
+    if (!url) return "";
+    if (url.includes("youtube.com/watch?v=")) {
+      return url.replace("watch?v=", "embed/");
+    }
+    if (url.includes("youtu.be/")) {
+      return url.replace("youtu.be/", "youtube.com/embed/");
+    }
+    return url;
+  };
+
+  if (loading) return <div className="h-screen bg-black text-white flex items-center justify-center"><Loader className="animate-spin" /></div>;
+  if (!currentCourse) return null;
 
   return (
     <div className="h-screen bg-[#0B0C15] flex flex-col text-white overflow-hidden font-sans">
@@ -37,7 +66,7 @@ export default function VideoPlayerPage() {
           </button>
           <div>
             <h1 className="text-sm font-bold text-white tracking-tight">{currentCourse.title}</h1>
-            <p className="text-xs text-gray-400">Now Playing: Lesson 1</p>
+            <p className="text-xs text-gray-400">Now Playing: {activeLesson?.title || "Introduction"}</p>
           </div>
         </div>
       </nav>
@@ -48,20 +77,45 @@ export default function VideoPlayerPage() {
         <main className="flex-1 bg-black relative flex flex-col items-center justify-center group overflow-hidden">
           <div className="absolute inset-0 bg-indigo-900/20 blur-[100px] pointer-events-none opacity-50" />
           
-          <img 
-            src={currentCourse.thumbnail} 
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${isPlaying ? 'opacity-0' : 'opacity-60'}`} 
-            alt="Video"
-          />
-
-          <motion.button 
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="relative z-10 w-24 h-24 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center text-white shadow-[0_0_60px_rgba(99,102,241,0.3)] hover:bg-indigo-600"
-          >
-            {isPlaying ? <Pause size={32} fill="white" /> : <Play size={32} fill="white" className="ml-2" />}
-          </motion.button>
+          {/* VIDEO PLAYER LOGIC */}
+          {isPlaying && activeLesson?.video_url ? (
+             // CHECK: Is it YouTube?
+             activeLesson.video_url.includes("youtube.com") || activeLesson.video_url.includes("youtu.be") ? (
+                <iframe 
+                    src={getEmbedUrl(activeLesson.video_url)} 
+                    title="YouTube video player" 
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                    className="relative z-10 w-full h-full max-h-[80vh] aspect-video bg-black"
+                />
+             ) : (
+                // CHECK: Is it a direct file (mp4)?
+                <video 
+                    src={activeLesson.video_url} 
+                    controls 
+                    autoPlay 
+                    className="relative z-10 w-full h-full max-h-[80vh] aspect-video bg-black"
+                />
+             )
+          ) : (
+              // THUMBNAIL STATE
+              <>
+                <img 
+                    src={currentCourse.thumbnail} 
+                    className="absolute inset-0 w-full h-full object-cover opacity-60" 
+                    alt="Video Thumbnail"
+                />
+                <motion.button 
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsPlaying(true)}
+                    className="relative z-10 w-24 h-24 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center text-white shadow-[0_0_60px_rgba(99,102,241,0.3)] hover:bg-indigo-600"
+                >
+                    <Play size={32} fill="white" className="ml-2" />
+                </motion.button>
+              </>
+          )}
           
           <AIStudyBuddy />
         </main>
@@ -90,7 +144,7 @@ export default function VideoPlayerPage() {
           <div className="flex-1 overflow-y-auto">
             {activeTab === 'curriculum' ? (
                 <div>
-                   {currentCourse.modules ? currentCourse.modules.map((module, idx) => (
+                   {currentCourse.modules && currentCourse.modules.length > 0 ? currentCourse.modules.map((module, idx) => (
                     <div key={idx} className="border-b border-white/5">
                       <button 
                         onClick={() => setExpandedModule(expandedModule === idx ? -1 : idx)}
@@ -103,8 +157,12 @@ export default function VideoPlayerPage() {
                       <AnimatePresence>
                         {expandedModule === idx && (
                           <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden bg-[#0B0C15]">
-                            {module.lessons.map((lesson) => (
-                              <div key={lesson.id} className="px-6 py-4 flex items-start gap-4 hover:bg-white/5 cursor-pointer">
+                            {module.lessons && module.lessons.map((lesson) => (
+                              <div 
+                                key={lesson.id} 
+                                onClick={() => { setActiveLesson(lesson); setIsPlaying(true); }}
+                                className={`px-6 py-4 flex items-start gap-4 hover:bg-white/5 cursor-pointer ${activeLesson?.id === lesson.id ? 'bg-white/5 border-l-2 border-indigo-500' : ''}`}
+                              >
                                 <div className="mt-1">
                                   {lesson.completed ? <CheckCircle size={14} className="text-emerald-500" /> : <div className="w-4 h-4 rounded-full border-2 border-indigo-500" />}
                                 </div>
@@ -118,7 +176,7 @@ export default function VideoPlayerPage() {
                         )}
                       </AnimatePresence>
                     </div>
-                  )) : <div className="p-6 text-gray-500">No content available</div>}
+                  )) : <div className="p-6 text-gray-500 text-sm">No modules found for this course.</div>}
                 </div>
             ) : (
                 <NotesPanel onSeek={(time) => console.log(`Seeking to ${time}`)} />

@@ -1,27 +1,43 @@
-import React, { useState } from 'react';
-import { Search, Filter } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, Loader } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { COURSES } from '../../data/mockData';
 import CourseCard from '../../components/cards/CourseCard';
 
 export default function Marketplace() {
+  const [courses, setCourses] = useState([]); // Store Real Data
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const navigate = useNavigate();
   
-  // Detect if we are in Public View or Dashboard View
+  const navigate = useNavigate();
   const location = useLocation();
   const isPublicView = location.pathname === '/marketplace';
 
-  const filteredCourses = COURSES.filter(course => {
+  // --- FETCH REAL DATA ---
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const res = await fetch('http://localhost:9000/api/courses');
+        if (!res.ok) throw new Error('Failed to fetch courses');
+        const data = await res.json();
+        setCourses(data);
+      } catch (err) {
+        console.error("Error fetching courses:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
+
+  const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          course.instructor.toLowerCase().includes(searchTerm.toLowerCase());
+                          (course.instructor_name && course.instructor_name.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = selectedCategory === "All" || course.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
   return (
-    // Dynamic Padding: pt-32 for Public (to clear Navbar), pt-8 for Dashboard
     <div className={`pb-20 ${isPublicView ? 'pt-32 px-6 max-w-7xl mx-auto' : 'pt-8'}`}>
         
         {/* Search & Filter Section */}
@@ -70,7 +86,11 @@ export default function Marketplace() {
         </div>
 
         {/* Results Grid */}
-        {filteredCourses.length > 0 ? (
+        {loading ? (
+           <div className="flex justify-center items-center h-64">
+              <Loader className="animate-spin text-indigo-500" size={40} />
+           </div>
+        ) : filteredCourses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCourses.map((course, index) => (
               <CourseCard key={course.id} course={course} index={index} />

@@ -1,9 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, DollarSign, Users, BookOpen, Plus } from "lucide-react";
+import { TrendingUp, DollarSign, Users, BookOpen, Plus, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SpotlightCard from "../../components/ui/SpotlightCard";
-import { COURSES, CURRENT_USER } from '../../data/mockData';
 
 const StatWidget = ({ title, value, change, icon: Icon, color }) => (
   <SpotlightCard className="p-6">
@@ -22,13 +21,38 @@ const StatWidget = ({ title, value, change, icon: Icon, color }) => (
 
 export default function InstructorDashboard() {
   const navigate = useNavigate();
+  const [stats, setStats] = useState({ revenue: 0, students: 0, rating: 0 });
+  const [loading, setLoading] = useState(true);
+  const user = JSON.parse(localStorage.getItem("user")); // Get Name
+
+  useEffect(() => {
+    const fetchStats = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch("http://localhost:9000/api/dashboard/instructor-stats", {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            
+            if(!res.ok) throw new Error("Failed to fetch stats");
+            const data = await res.json();
+            setStats(data);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchStats();
+  }, []);
+
+  if (loading) return <div className="p-8"><Loader className="animate-spin text-white" /></div>;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Dashboard Overview</h1>
-          <p className="text-gray-400 text-sm">Welcome back, {CURRENT_USER.name}. Here's your daily breakdown.</p>
+          <p className="text-gray-400 text-sm">Welcome back, {user?.name}. Here's your daily breakdown.</p>
         </div>
         <button 
           onClick={() => navigate('/instructor/create-course')}
@@ -40,10 +64,10 @@ export default function InstructorDashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatWidget title="Total Revenue" value={CURRENT_USER.stats.revenue} change="+12.5%" icon={DollarSign} color="text-emerald-400" />
-        <StatWidget title="Active Students" value={CURRENT_USER.stats.students} change="+8.2%" icon={Users} color="text-blue-400" />
-        <StatWidget title="Total Sales" value="1,234" change="+3.1%" icon={BookOpen} color="text-purple-400" />
-        <StatWidget title="Avg. Rating" value={CURRENT_USER.stats.rating} change="+1.2%" icon={Users} color="text-yellow-400" />
+        <StatWidget title="Total Revenue" value={`$${stats.revenue}`} change="+12.5%" icon={DollarSign} color="text-emerald-400" />
+        <StatWidget title="Active Students" value={stats.students} change="+8.2%" icon={Users} color="text-blue-400" />
+        <StatWidget title="Total Sales" value={stats.students} change="+3.1%" icon={BookOpen} color="text-purple-400" />
+        <StatWidget title="Avg. Rating" value={stats.rating} change="+0.0%" icon={Users} color="text-yellow-400" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -52,6 +76,7 @@ export default function InstructorDashboard() {
              <h3 className="font-semibold text-white">Revenue Analytics</h3>
            </div>
            <div className="w-full h-48 flex items-end justify-between gap-2 px-4 mt-8">
+              {/* This graph is still visual-only for now, but uses stats.revenue to scale vaguely if you wanted */}
               {[40, 65, 45, 80, 55, 90, 70].map((h, i) => (
                 <motion.div 
                   key={i}
@@ -69,18 +94,8 @@ export default function InstructorDashboard() {
 
         <SpotlightCard className="p-6 h-full">
             <h3 className="font-semibold text-white mb-6">Recent Courses</h3>
-            <div className="space-y-4">
-              {COURSES.slice(0, 3).map((course) => (
-                <div key={course.id} onClick={() => navigate('/instructor/courses')} className="flex items-center gap-4 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors">
-                  <img src={course.thumbnail} alt="" className="w-12 h-12 rounded-lg object-cover" />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-white truncate">{course.title}</h4>
-                    <span className="text-xs text-emerald-400">{course.status}</span>
-                  </div>
-                  <div className="text-sm font-bold">{course.earnings}</div>
-                </div>
-              ))}
-            </div>
+            {/* You can add a fetch for Recent Courses here later if you want */}
+            <div className="text-gray-500 text-sm">Loading recent activity...</div>
         </SpotlightCard>
       </div>
     </div>

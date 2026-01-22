@@ -1,13 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { getAllCourses, getCourseDetails, createCourse } = require('../controllers/courseController');
+const { getAllCourses, getCourseDetails, createCourse, addLesson } = require('../controllers/courseController');
 const authMiddleware = require('../middleware/authMiddleware');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
 // --- MULTER SETUP ---
-// Ensure 'uploads' directory exists
 const uploadDir = 'uploads/';
 if (!fs.existsSync(uploadDir)){
     fs.mkdirSync(uploadDir);
@@ -15,10 +14,9 @@ if (!fs.existsSync(uploadDir)){
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/'); // Save to 'uploads' folder
+        cb(null, 'uploads/');
     },
     filename: function (req, file, cb) {
-        // Create unique filename: video-123456789.mp4
         cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
     }
 });
@@ -29,8 +27,10 @@ const upload = multer({ storage: storage });
 router.get('/', getAllCourses); 
 router.get('/:id', getCourseDetails); 
 
-// NEW: Upload Middleware attached to POST
-// We accept 2 files: 'thumbnail' and 'video' (for the intro lesson)
+// Create Course (Thumbnail + Intro Video)
 router.post('/', authMiddleware, upload.fields([{ name: 'thumbnail', maxCount: 1 }, { name: 'video', maxCount: 1 }]), createCourse); 
+
+// Add Lesson (Video Only) - NEW ROUTE
+router.post('/lesson', authMiddleware, upload.fields([{ name: 'video', maxCount: 1 }]), addLesson);
 
 module.exports = router;

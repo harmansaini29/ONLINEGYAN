@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const path = require("path"); // <--- Import Path
+const path = require("path"); 
 
 dotenv.config();
 
@@ -10,8 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- SERVE STATIC FILES (VIDEOS/IMAGES) ---
-// This allows http://localhost:9000/uploads/video.mp4 to work
+// --- SERVE STATIC FILES ---
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes Definition
@@ -19,7 +18,8 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/courses', require('./routes/courseRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/enrollments', require('./routes/enrollmentRoutes'));
-app.use('/api/wallet', require('./routes/walletRoutes')); // <--- NEW WALLET ROUTE
+app.use('/api/wallet', require('./routes/walletRoutes'));
+app.use('/api/reviews', require('./routes/reviewRoutes')); 
 
 app.get("/", (req, res) => {
     res.send("🚀 OnlineGyan Backend is Running Professionally!");

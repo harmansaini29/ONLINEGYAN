@@ -5,20 +5,16 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import { API_BASE_URL } from '../../config';
 
-// --- FIXED INPUT FIELD COMPONENT ---
+// --- FIXED INPUT COMPONENT (Fixes the Backspace/Autofill Bug) ---
 const InputField = ({ label, type, icon: Icon, id, error, onChange, value, ...props }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  // Ensure the label floats if there is a value (even from autofill)
+  
+  // Check if input has value (handling both controlled state & autofill)
   const hasValue = value && value.length > 0;
   
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
-
-  // Combine internal and external change handlers
-  const handleChange = (e) => {
-      if (onChange) onChange(e);
-  };
 
   return (
     <div className="relative mb-5 group">
@@ -29,19 +25,21 @@ const InputField = ({ label, type, icon: Icon, id, error, onChange, value, ...pr
       <input
         type={inputType}
         id={id}
-        value={value} // Controlled component
+        name={id}
+        value={value}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        onChange={handleChange}
+        onChange={onChange}
         className={`w-full bg-[#0F1016]/60 border rounded-xl py-4 pl-12 pr-12 text-white placeholder-transparent focus:outline-none transition-all duration-300 backdrop-blur-sm
             ${error ? "border-red-500/50 focus:border-red-500" : isFocused ? "border-indigo-500/50 shadow-[0_0_20px_rgba(99,102,241,0.1)]" : "border-white/10 hover:border-white/20"}
         `}
         placeholder={label}
-        autoComplete={id === "password" ? "current-password" : "on"}
+        autoComplete={id === "password" ? "current-password" : "on"} // Helps browser autofill correctly
         required
         {...props}
       />
 
+      {/* Floating Label Logic */}
       <label
         htmlFor={id}
         className={`absolute left-12 transition-all duration-300 pointer-events-none font-medium
@@ -83,10 +81,10 @@ const RoleCard = ({ role, icon: Icon, title, desc, onClick }) => (
     </motion.button>
 );
 
-// --- MAIN PAGE ---
+// --- MAIN AUTH PAGE ---
 export default function AuthPage() {
-  const [view, setView] = useState('selection'); // 'selection' | 'form'
-  const [userType, setUserType] = useState(null); // 'learner' | 'instructor'
+  const [view, setView] = useState('selection');
+  const [userType, setUserType] = useState(null);
   const [isLogin, setIsLogin] = useState(true);
   
   const [loading, setLoading] = useState(false);
@@ -97,7 +95,6 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // --- REDIRECT LOGIC ---
   const handleRedirect = (role) => {
       const from = location.state?.from?.pathname;
       if (from) {
@@ -142,7 +139,6 @@ export default function AuthPage() {
       handleRedirect(data.user.role);
   }
 
-  // --- AUTH HANDLER ---
   const handleAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -150,18 +146,20 @@ export default function AuthPage() {
     setSuccess("");
 
     if (!API_BASE_URL) {
-        setError("Configuration Error: API URL missing in config.js");
+        setError("Config Error: Missing API_BASE_URL");
         setLoading(false);
         return;
     }
 
+    // Fake delay for smoother UX
     await new Promise(r => setTimeout(r, 800)); 
 
     const endpoint = isLogin ? "/auth/login" : "/auth/register";
+    // Ensure no double slashes in URL
     const baseUrl = API_BASE_URL.replace(/\/$/, '');
     const url = `${baseUrl}${endpoint}`;
 
-    // Trim spaces from email to prevent accidental errors
+    // Trim Email to prevent space errors
     const cleanEmail = formData.email.trim();
 
     const payload = isLogin 
@@ -169,7 +167,8 @@ export default function AuthPage() {
         : { name: formData.name, email: cleanEmail, password: formData.password, role: userType };
 
     try {
-        console.log(`📡 Sending request to: ${url}`);
+        console.log("Connecting to:", url); // Debugging
+        
         const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -179,15 +178,13 @@ export default function AuthPage() {
         const data = await res.json();
         
         if (!res.ok) {
-            throw new Error(data.msg || data.error || `Error ${res.status}: Authentication failed`);
+            throw new Error(data.msg || data.error || `Error ${res.status}: Auth Failed`);
         }
 
         if (isLogin) {
             if (data.user.role !== userType) {
-                const proceed = confirm(`⚠️ Account Found!\n\nYou are registered as a "${data.user.role}", but you are on the "${userType}" login page.\n\nClick OK to switch to your correct dashboard.`);
-                if(!proceed) {
-                     throw new Error("Login cancelled. Please use the correct role.");
-                }
+                const proceed = confirm(`⚠️ Account Found!\n\nYou are a "${data.user.role}", but tried logging in as "${userType}".\n\nSwitch to your correct dashboard?`);
+                if(!proceed) throw new Error("Login cancelled.");
             }
             processLoginSuccess(data);
         } else {
@@ -196,8 +193,13 @@ export default function AuthPage() {
             setFormData({ ...formData, password: "" }); 
         }
     } catch (err) {
-        console.error("Auth Error:", err);
-        setError(err.message || "Failed to connect. Check internet.");
+        console.error(err);
+        // User-friendly error message
+        if (err.message.includes("Failed to fetch")) {
+             setError("Network Error: Could not reach the server. Check your internet connection.");
+        } else {
+             setError(err.message || "Something went wrong.");
+        }
     } finally {
         setLoading(false);
     }

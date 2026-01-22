@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { CreditCard, CheckCircle, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from '../../config'; // ✅ Import Config
+import { API_BASE_URL } from '../../config';
 
 const PACKAGES = [
   { amount: 100, price: 100, label: "Starter" },
@@ -15,7 +15,7 @@ export default function RefillCredits() {
   const navigate = useNavigate();
   const [selectedAmount, setSelectedAmount] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("idle"); // idle | success | error
+  const [status, setStatus] = useState("idle"); 
   const [msg, setMsg] = useState("");
 
   const handlePayment = async () => {
@@ -27,7 +27,6 @@ export default function RefillCredits() {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Please log in first");
 
-      // ✅ FIXED: Use API_BASE_URL + Correct Endpoint
       const res = await fetch(`${API_BASE_URL}/wallet/refill`, {
         method: "POST",
         headers: {
@@ -43,9 +42,11 @@ export default function RefillCredits() {
 
       setStatus("success");
       setMsg(`Successfully added $${selectedAmount} to wallet!`);
-      
-      // ✅ FIXED: Navigate to the correct Learner Dashboard (Marketplace)
-      // Wait 2 seconds so user sees the success message, then redirect
+
+      // 🔥 CRITICAL: Tell the whole app to update balance immediately
+      window.dispatchEvent(new Event("walletUpdated")); 
+
+      // Redirect after 2 seconds
       setTimeout(() => {
          navigate('/learner/marketplace'); 
       }, 2000);
@@ -61,7 +62,6 @@ export default function RefillCredits() {
 
   return (
     <div className="min-h-screen bg-[#05060A] p-6 md:p-12 text-white font-sans flex items-center justify-center relative overflow-hidden">
-       {/* Background Glow */}
        <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px]" />
        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px]" />
 
@@ -79,7 +79,6 @@ export default function RefillCredits() {
                   <p className="text-gray-400">Secure simulated payment gateway</p>
               </div>
 
-              {/* Status Messages */}
               {status === 'error' && (
                   <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400">
                       <AlertCircle size={20} /> {msg}
@@ -91,7 +90,6 @@ export default function RefillCredits() {
                   </motion.div>
               )}
 
-              {/* Credit Packages */}
               <div className="grid grid-cols-2 gap-4 mb-8">
                   {PACKAGES.map((pkg) => (
                       <button
@@ -110,15 +108,13 @@ export default function RefillCredits() {
                   ))}
               </div>
 
-              {/* Disclaimer */}
               <div className="bg-yellow-500/5 border border-yellow-500/10 p-4 rounded-xl mb-8 flex items-start gap-3">
                    <AlertCircle size={18} className="text-yellow-500 mt-0.5 shrink-0" />
                    <p className="text-xs text-yellow-500/80 leading-relaxed">
-                       <strong>Demo Mode:</strong> This is a simulation. No real money will be deducted from your bank account. The selected amount will be added to your virtual wallet immediately.
+                       <strong>Demo Mode:</strong> This is a simulation. No real money will be deducted.
                    </p>
               </div>
 
-              {/* Action Button */}
               <button 
                   onClick={handlePayment}
                   disabled={!selectedAmount || loading || status === 'success'}

@@ -9,26 +9,39 @@ export default function Navbar({ showBack = false, title = "OnlineGyan." }) {
   const [user, setUser] = useState(null);
   const [balance, setBalance] = useState(0);
 
+  // 🔥 Helper to fetch fresh balance
+  const fetchBalance = () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch(`${API_BASE_URL}/auth/me`, {
+        headers: { "Authorization": `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.wallet_balance !== undefined) setBalance(data.wallet_balance);
+    })
+    .catch(err => console.error("Failed to fetch balance:", err));
+  };
+
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     
+    // Load User & Initial Balance
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
         setUser(JSON.parse(storedUser));
-        const token = localStorage.getItem("token");
-        if (token) {
-            fetch(`${API_BASE_URL}/auth/me`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.wallet_balance !== undefined) setBalance(data.wallet_balance);
-            })
-            .catch(err => console.error("Failed to fetch balance:", err));
-        }
+        fetchBalance();
     }
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    // 🔥 LISTEN for the update event from RefillCredits
+    window.addEventListener("walletUpdated", fetchBalance);
+
+    return () => {
+        window.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("walletUpdated", fetchBalance);
+    };
   }, []);
 
   const handleDashboardClick = () => {
@@ -41,7 +54,6 @@ export default function Navbar({ showBack = false, title = "OnlineGyan." }) {
     <nav className={`fixed top-0 w-full z-50 transition-all duration-500 border-b ${isScrolled ? "bg-[#05060A]/90 backdrop-blur-xl border-white/5 py-3" : "bg-transparent border-transparent py-6"}`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         
-        {/* Logo Section */}
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
           {showBack && (
             <div className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors mr-2">
@@ -55,7 +67,6 @@ export default function Navbar({ showBack = false, title = "OnlineGyan." }) {
           <span className="text-xl font-bold text-white tracking-tight hidden sm:block">{title}</span>
         </div>
 
-        {/* Desktop Links */}
         <div className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/5 backdrop-blur-md">
           {[{ name: "Marketplace", path: "/marketplace" }, { name: "Mentors", path: "/mentors" }, { name: "Enterprise", path: "/enterprise" }].map((item) => (
             <button key={item.name} onClick={() => navigate(item.path)} className="px-6 py-2 text-xs font-medium text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all">
@@ -64,11 +75,9 @@ export default function Navbar({ showBack = false, title = "OnlineGyan." }) {
           ))}
         </div>
 
-        {/* Right Actions (Wallet + Profile) */}
         <div className="flex items-center gap-3">
           {user ? (
              <>
-                {/* ✅ WALLET NOW VISIBLE ON MOBILE */}
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-[#13141f] border border-white/10 rounded-xl shadow-inner">
                     <div className="p-1 bg-emerald-500/20 rounded-md"><Wallet size={14} className="text-emerald-400" /></div>
                     <span className="text-sm text-white font-bold">${balance}</span>

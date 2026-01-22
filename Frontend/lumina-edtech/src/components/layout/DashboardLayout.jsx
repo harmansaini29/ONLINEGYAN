@@ -8,27 +8,37 @@ import { API_BASE_URL } from '../../config';
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const [user, setUser] = useState({ name: "User", role: "learner", avatar: "" });
-  const [balance, setBalance] = useState(0); // Add Balance State
+  const [balance, setBalance] = useState(0); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // 🔥 Helper to fetch fresh balance
+  const fetchBalance = () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch(`${API_BASE_URL}/auth/me`, {
+        headers: { "Authorization": `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.wallet_balance !== undefined) setBalance(data.wallet_balance);
+    })
+    .catch(console.error);
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
         setUser(JSON.parse(storedUser));
-        
-        // Fetch Fresh Balance
-        const token = localStorage.getItem("token");
-        if (token) {
-            fetch(`${API_BASE_URL}/auth/me`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.wallet_balance !== undefined) setBalance(data.wallet_balance);
-            })
-            .catch(console.error);
-        }
+        fetchBalance();
     }
+
+    // 🔥 LISTEN for update event
+    window.addEventListener("walletUpdated", fetchBalance);
+
+    return () => {
+        window.removeEventListener("walletUpdated", fetchBalance);
+    };
   }, []);
 
   const role = user.role || 'learner';
@@ -39,6 +49,7 @@ export default function DashboardLayout() {
     navigate('/');
   };
 
+  // ... (SidebarContent component stays the same)
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
         <div className="h-24 flex items-center px-8 cursor-pointer" onClick={() => navigate('/')}>
@@ -119,7 +130,6 @@ export default function DashboardLayout() {
           </button>
 
           <div className="flex items-center justify-end w-full gap-4 sm:gap-6">
-             {/* ✅ WALLET ADDED TO DASHBOARD HEADER */}
              <div className="flex items-center gap-2 px-3 py-1.5 bg-[#13141f] border border-white/10 rounded-xl shadow-inner">
                 <div className="p-1 bg-emerald-500/20 rounded-md"><Wallet size={14} className="text-emerald-400" /></div>
                 <span className="text-sm text-white font-bold">${balance}</span>

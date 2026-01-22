@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, User, ArrowRight, Eye, EyeOff, ChevronLeft, Github, Chrome, CheckCircle, AlertCircle, Loader2, GraduationCap, Presentation } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Eye, EyeOff, ChevronLeft, CheckCircle, AlertCircle, Loader2, GraduationCap, Presentation } from "lucide-react";
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { API_BASE_URL } from '../../config';
+
 const InputField = ({ label, type, icon: Icon, id, error, ...props }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -135,45 +136,66 @@ export default function AuthPage() {
       handleRedirect(data.user.role);
   }
 
+  // --- ROBUST AUTH HANDLER (UPDATED) ---
   const handleAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     setSuccess("");
 
+    // 1. Critical Config Check
+    if (!API_BASE_URL) {
+        setError("System Error: API Configuration is missing. Check config.js");
+        setLoading(false);
+        return;
+    }
+
+    // Artificial delay for UX smoothness
     await new Promise(r => setTimeout(r, 800)); 
 
     const endpoint = isLogin ? "/auth/login" : "/auth/register";
+    
+    // 2. Safe URL Construction (Removes potential trailing slash from API_BASE_URL)
+    const baseUrl = API_BASE_URL.replace(/\/$/, '');
+    const url = `${baseUrl}${endpoint}`;
+
     const payload = isLogin 
         ? { email: formData.email, password: formData.password }
         : { name: formData.name, email: formData.email, password: formData.password, role: userType };
 
     try {
-        const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+        console.log(`📡 Connecting to: ${url}`); // Helpful for debugging
+
+        const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.msg || "Authentication failed");
+        
+        // 3. Handle Non-200 Responses Gracefully
+        if (!res.ok) {
+            throw new Error(data.msg || data.error || `Error ${res.status}: Authentication failed`);
+        }
 
         if (isLogin) {
-            // Check if role matches selected panel
+            // 4. Role Integrity Check
             if (data.user.role !== userType) {
-                // If they logged in as Instructor but clicked Learner panel
-                if(!confirm(`You are registered as a ${data.user.role}, but you are on the ${userType} login page. Do you want to continue to your ${data.user.role} dashboard?`)) {
+                if(!confirm(`⚠️ Account found, but you are a "${data.user.role}", not a "${userType}".\n\nSwitch to your correct dashboard?`)) {
                      throw new Error("Login cancelled. Please choose the correct role.");
                 }
             }
             processLoginSuccess(data);
         } else {
             setIsLogin(true);
-            setSuccess(`Welcome ${userType}! Account created. Please log in.`);
+            setSuccess(`Welcome ${userType}! Account created successfully. Please log in.`);
             setFormData({ ...formData, password: "" }); 
         }
     } catch (err) {
-        setError(err.message);
+        console.error("Auth Error:", err);
+        // Display a user-friendly error message
+        setError(err.message || "Failed to connect to server. Please check your internet connection.");
     } finally {
         setLoading(false);
     }

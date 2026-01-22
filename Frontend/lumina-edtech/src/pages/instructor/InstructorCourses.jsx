@@ -11,15 +11,12 @@ export default function InstructorCourses() {
     useEffect(() => {
         const fetchCourses = async () => {
             const token = localStorage.getItem("token");
-            // Note: In a real app, you'd filter this API to only return *my* courses
-            // For now, we will filter on the client side or assume the API handles it
             const res = await fetch(`${API_BASE_URL}/courses`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();
             const user = JSON.parse(localStorage.getItem("user"));
             
-            // Client-side filter for safety
             const myCourses = data.filter(c => c.instructor_id === user.id);
             setCourses(myCourses);
             setLoading(false);

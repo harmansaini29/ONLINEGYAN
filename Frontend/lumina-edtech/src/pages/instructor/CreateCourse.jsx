@@ -13,7 +13,6 @@ export default function CreateCourse() {
     price: "",
     description: "",
   });
-  // File States
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [videoFile, setVideoFile] = useState(null);
 
@@ -22,7 +21,6 @@ export default function CreateCourse() {
     setLoading(true);
     const token = localStorage.getItem("token");
 
-    // Create FormData object for Multipart/Form-Data
     const data = new FormData();
     data.append('title', formData.title);
     data.append('category', formData.category);
@@ -36,7 +34,6 @@ export default function CreateCourse() {
             method: 'POST',
             headers: {
                 "Authorization": `Bearer ${token}`
-                // Note: Do NOT set Content-Type to application/json manually for FormData
             },
             body: data
         });
@@ -64,7 +61,6 @@ export default function CreateCourse() {
         <p className="text-gray-400 mb-8">Upload your video content and publish to the world.</p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Title */}
             <div>
                 <label className="block text-sm font-bold text-gray-300 mb-2">Course Title</label>
                 <input 
@@ -78,7 +74,6 @@ export default function CreateCourse() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-                {/* Category */}
                 <div>
                     <label className="block text-sm font-bold text-gray-300 mb-2">Category</label>
                     <div className="relative">
@@ -96,7 +91,6 @@ export default function CreateCourse() {
                     </div>
                 </div>
 
-                {/* Price */}
                 <div>
                     <label className="block text-sm font-bold text-gray-300 mb-2">Price ($)</label>
                     <div className="relative">
@@ -113,7 +107,6 @@ export default function CreateCourse() {
                 </div>
             </div>
 
-            {/* Description */}
             <div>
                 <label className="block text-sm font-bold text-gray-300 mb-2">Description</label>
                 <div className="relative">
@@ -129,9 +122,7 @@ export default function CreateCourse() {
                 </div>
             </div>
 
-            {/* File Uploads Row */}
             <div className="grid md:grid-cols-2 gap-6">
-                {/* Thumbnail File */}
                 <div>
                     <label className="block text-sm font-bold text-gray-300 mb-2">Course Thumbnail</label>
                     <div className="border-2 border-dashed border-white/10 rounded-xl p-6 flex flex-col items-center justify-center hover:border-indigo-500/50 transition-colors bg-black/20 cursor-pointer relative">
@@ -148,7 +139,6 @@ export default function CreateCourse() {
                     </div>
                 </div>
 
-                {/* Video File */}
                 <div>
                     <label className="block text-sm font-bold text-gray-300 mb-2">Intro Video</label>
                     <div className="border-2 border-dashed border-white/10 rounded-xl p-6 flex flex-col items-center justify-center hover:border-indigo-500/50 transition-colors bg-black/20 cursor-pointer relative">

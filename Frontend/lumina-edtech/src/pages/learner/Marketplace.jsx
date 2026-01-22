@@ -5,7 +5,7 @@ import CourseCard from '../../components/cards/CourseCard';
 import { API_BASE_URL } from '../../config';
 
 export default function Marketplace() {
-  const [courses, setCourses] = useState([]); // Store Real Data
+  const [courses, setCourses] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -14,7 +14,6 @@ export default function Marketplace() {
   const location = useLocation();
   const isPublicView = location.pathname === '/marketplace';
 
-  // --- FETCH REAL DATA ---
   useEffect(() => {
     const fetchCourses = async () => {
       try {

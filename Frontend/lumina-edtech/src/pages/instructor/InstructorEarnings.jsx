@@ -8,7 +8,6 @@ export default function InstructorEarnings() {
     const [transactions, setTransactions] = useState([]);
 
     useEffect(() => {
-        // Fetch User Profile to get Balance
         const fetchData = async () => {
             const token = localStorage.getItem("token");
             const res = await fetch(`${API_BASE_URL}/auth/me`, {
@@ -16,7 +15,6 @@ export default function InstructorEarnings() {
             });
             const data = await res.json();
             setBalance(data.wallet_balance);
-            // Mock transactions for now (Backend table created, but endpoint needs to be made if you want real history)
             setTransactions([
                 { id: 1, desc: "Course Sale: React Masterclass", amount: "+$99.00", date: "Today" },
                 { id: 2, desc: "Course Sale: Node.js Pro", amount: "+$49.00", date: "Yesterday" }

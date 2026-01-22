@@ -4,7 +4,6 @@ import { Mail, Lock, User, ArrowRight, Eye, EyeOff, ChevronLeft, Github, Chrome,
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { API_BASE_URL } from '../../config';
-// --- COMPONENTS ---
 const InputField = ({ label, type, icon: Icon, id, error, ...props }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);

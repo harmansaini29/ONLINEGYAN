@@ -27,7 +27,6 @@ export default function VideoPlayerPage() {
             const data = await res.json();
             
             setCurrentCourse(data);
-            // Default to first lesson of first module if available
             if(data.modules?.[0]?.lessons?.[0]) {
                 setActiveLesson(data.modules[0].lessons[0]);
             }
@@ -42,7 +41,6 @@ export default function VideoPlayerPage() {
     fetchCourseDetails();
   }, [courseId, navigate]);
 
-  // Helper to get embed URL
   const getEmbedUrl = (url) => {
     if (!url) return "";
     if (url.includes("youtube.com/watch?v=")) {

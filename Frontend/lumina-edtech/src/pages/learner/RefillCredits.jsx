@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CreditCard, Wallet, ShieldCheck, Zap, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 
 const CreditPackage = ({ amount, bonus, onSelect, loading }) => (
     <motion.button
@@ -40,7 +41,7 @@ export default function RefillCredits() {
         const token = localStorage.getItem("token");
 
         try {
-            const res = await fetch('http://localhost:9000/api/wallet/refill', {
+            const res = await fetch(`${API_BASE_URL}/wallet/refill`, {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json",

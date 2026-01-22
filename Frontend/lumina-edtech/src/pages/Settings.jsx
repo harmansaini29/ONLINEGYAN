@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Save, User } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export default function Settings() {
     const [userData, setUserData] = useState({ name: '', email: '', bio: '' });
 
     useEffect(() => {
         const token = localStorage.getItem("token");
-        fetch('http://localhost:9000/api/auth/me', {
+        fetch(`${API_BASE_URL}/auth/me`, {
             headers: { "Authorization": `Bearer ${token}` }
         })
         .then(res => res.json())

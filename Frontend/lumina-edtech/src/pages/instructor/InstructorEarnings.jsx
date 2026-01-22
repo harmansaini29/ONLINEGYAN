@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { DollarSign, TrendingUp, Download } from 'lucide-react';
 import SpotlightCard from '../../components/ui/SpotlightCard';
+import { API_BASE_URL } from '../../config';
 
 export default function InstructorEarnings() {
     const [balance, setBalance] = useState(0);
@@ -10,7 +11,7 @@ export default function InstructorEarnings() {
         // Fetch User Profile to get Balance
         const fetchData = async () => {
             const token = localStorage.getItem("token");
-            const res = await fetch('http://localhost:9000/api/auth/me', {
+            const res = await fetch(`${API_BASE_URL}/auth/me`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();

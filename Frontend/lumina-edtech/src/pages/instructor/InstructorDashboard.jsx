@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, DollarSign, Users, BookOpen, Plus, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SpotlightCard from "../../components/ui/SpotlightCard";
+import { API_BASE_URL } from '../../config';
 
 const StatWidget = ({ title, value, change, icon: Icon, color }) => (
   <SpotlightCard className="p-6">
@@ -29,7 +30,7 @@ export default function InstructorDashboard() {
     const fetchStats = async () => {
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch("http://localhost:9000/api/dashboard/instructor-stats", {
+            const res = await fetch(`${API_BASE_URL}/dashboard/instructor-stats`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             

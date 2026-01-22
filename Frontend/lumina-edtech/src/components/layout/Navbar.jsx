@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Wallet } from 'lucide-react';
+import { API_BASE_URL } from '../../config';
 
 export default function Navbar({ showBack = false, title = "OnlineGyan." }) {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ export default function Navbar({ showBack = false, title = "OnlineGyan." }) {
         // Fetch Wallet Balance
         const token = localStorage.getItem("token");
         if (token) {
-            fetch('http://localhost:9000/api/auth/me', {
+            fetch(`${API_BASE_URL}/auth/me`, {
                 headers: { "Authorization": `Bearer ${token}` }
             })
             .then(res => res.json())

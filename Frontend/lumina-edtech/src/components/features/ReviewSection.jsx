@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Star, MessageSquare } from 'lucide-react';
+import { API_BASE_URL } from '../../config';
 
 export default function ReviewSection({ courseId }) {
     const [reviews, setReviews] = useState([]);
@@ -8,7 +9,7 @@ export default function ReviewSection({ courseId }) {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        fetch(`http://localhost:9000/api/reviews/${courseId}`)
+        fetch(`${API_BASE_URL}/reviews/${courseId}`)
             .then(res => res.json())
             .then(data => setReviews(data));
     }, [courseId]);
@@ -18,7 +19,7 @@ export default function ReviewSection({ courseId }) {
         setLoading(true);
         const token = localStorage.getItem("token");
         
-        await fetch('http://localhost:9000/api/reviews', {
+        await fetch(`${API_BASE_URL}/reviews`, {
             method: 'POST',
             headers: { 
                 "Content-Type": "application/json",
@@ -30,7 +31,7 @@ export default function ReviewSection({ courseId }) {
         setLoading(false);
         setComment("");
         // Refresh reviews
-        const res = await fetch(`http://localhost:9000/api/reviews/${courseId}`);
+        const res = await fetch(`${API_BASE_URL}/reviews/${courseId}`);
         const data = await res.json();
         setReviews(data);
     };

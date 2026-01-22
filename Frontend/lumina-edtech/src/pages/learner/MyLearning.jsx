@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Clock, Award, MoreHorizontal, Loader } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 
 export default function MyLearning() {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ export default function MyLearning() {
                 return;
             }
 
-            const res = await fetch('http://localhost:9000/api/enrollments/my-courses', {
+            const res = await fetch(`${API_BASE_URL}/enrollments/my-courses`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             

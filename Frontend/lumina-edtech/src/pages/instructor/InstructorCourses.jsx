@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Loader, Edit, Trash2, Plus, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 
 export default function InstructorCourses() {
     const navigate = useNavigate();
@@ -12,7 +13,7 @@ export default function InstructorCourses() {
             const token = localStorage.getItem("token");
             // Note: In a real app, you'd filter this API to only return *my* courses
             // For now, we will filter on the client side or assume the API handles it
-            const res = await fetch('http://localhost:9000/api/courses', {
+            const res = await fetch(`${API_BASE_URL}/courses`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();

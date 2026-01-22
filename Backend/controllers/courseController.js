@@ -1,17 +1,28 @@
 const db = require('../config/db');
 
+// --- HELPER: Detect correct Server URL (Local vs Production) ---
+const getBaseUrl = (req) => {
+    // Railway automatically sets this variable in production
+    if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+        return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+    }
+    // Fallback for localhost (e.g., http://localhost:9000)
+    return `${req.protocol}://${req.get('host')}`;
+};
+
 // 1. Create Course (Initial Setup)
 exports.createCourse = async (req, res) => {
     const { title, category, price, description } = req.body;
     const instructorId = req.user.id;
+    const baseUrl = getBaseUrl(req);
 
-    // Get File Paths from Multer (if uploaded)
+    // Get File Paths from Multer (Dynamic URL)
     const thumbnailPath = req.files['thumbnail'] 
-        ? `http://localhost:9000/uploads/${req.files['thumbnail'][0].filename}` 
+        ? `${baseUrl}/uploads/${req.files['thumbnail'][0].filename}` 
         : "https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=800&q=80";
     
     const videoPath = req.files['video'] 
-        ? `http://localhost:9000/uploads/${req.files['video'][0].filename}`
+        ? `${baseUrl}/uploads/${req.files['video'][0].filename}`
         : "https://www.youtube.com/embed/dQw4w9WgXcQ"; // Fallback
 
     try {
@@ -46,10 +57,11 @@ exports.createCourse = async (req, res) => {
 // 2. Add Lesson (NEW FEATURE)
 exports.addLesson = async (req, res) => {
     const { courseId, moduleId, title, duration } = req.body;
+    const baseUrl = getBaseUrl(req);
     
     // Handle video upload if present, else use provided URL
     const videoPath = req.files && req.files['video'] 
-        ? `http://localhost:9000/uploads/${req.files['video'][0].filename}`
+        ? `${baseUrl}/uploads/${req.files['video'][0].filename}`
         : req.body.videoUrl || ""; 
 
     try {

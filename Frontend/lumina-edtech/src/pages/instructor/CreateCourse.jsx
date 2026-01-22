@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, DollarSign, Tag, FileText, ArrowLeft, Loader, Video, Image as ImageIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 
 export default function CreateCourse() {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ export default function CreateCourse() {
     if (videoFile) data.append('video', videoFile);
 
     try {
-        const res = await fetch('http://localhost:9000/api/courses', {
+        const res = await fetch(`${API_BASE_URL}/courses`, {
             method: 'POST',
             headers: {
                 "Authorization": `Bearer ${token}`

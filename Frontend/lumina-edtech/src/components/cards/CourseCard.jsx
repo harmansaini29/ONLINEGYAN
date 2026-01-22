@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PlayCircle, Star, ChevronRight, Lock, Loader } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config';
 
 export default function CourseCard({ course, index }) {
   const navigate = useNavigate();
   const [isEnrolled, setIsEnrolled] = useState(false);
-  const [loading, setLoading] = useState(false); // For the "Buying..." state
+  const [loading, setLoading] = useState(false); 
 
   // Check if user is logged in
   const token = localStorage.getItem("token");
@@ -14,7 +15,7 @@ export default function CourseCard({ course, index }) {
   // 1. Check Enrollment Status on Load
   useEffect(() => {
     if (token) {
-        fetch(`http://localhost:9000/api/enrollments/check/${course.id}`, {
+        fetch(`${API_BASE_URL}/enrollments/check/${course.id}`, {
             headers: { "Authorization": `Bearer ${token}` }
         })
         .then(res => res.json())
@@ -38,7 +39,7 @@ export default function CourseCard({ course, index }) {
         // BUY LOGIC
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:9000/api/enrollments', {
+            const res = await fetch(`${API_BASE_URL}/enrollments`, {
                 method: 'POST',
                 headers: { 
                     "Content-Type": "application/json",

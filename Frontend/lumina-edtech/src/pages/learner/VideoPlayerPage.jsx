@@ -4,6 +4,7 @@ import { Play, ChevronLeft, ChevronDown, CheckCircle, BookOpen, FileText, Loader
 import { useParams, useNavigate } from 'react-router-dom';
 import AIStudyBuddy from "../../components/ai/AIStudyBuddy";
 import NotesPanel from "../../components/features/NotesPanel";
+import { API_BASE_URL } from '../../config';
 
 export default function VideoPlayerPage() {
   const { courseId } = useParams();
@@ -21,7 +22,7 @@ export default function VideoPlayerPage() {
   useEffect(() => {
     const fetchCourseDetails = async () => {
         try {
-            const res = await fetch(`http://localhost:9000/api/courses/${courseId}`);
+            const res = await fetch(`${API_BASE_URL}/courses/${courseId}`);
             if (!res.ok) throw new Error("Course not found");
             const data = await res.json();
             

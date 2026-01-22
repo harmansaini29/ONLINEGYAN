@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, Loader } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import CourseCard from '../../components/cards/CourseCard';
+import { API_BASE_URL } from '../../config';
 
 export default function Marketplace() {
   const [courses, setCourses] = useState([]); // Store Real Data
@@ -17,7 +18,7 @@ export default function Marketplace() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await fetch('http://localhost:9000/api/courses');
+        const res = await fetch(`${API_BASE_URL}/courses`);
         if (!res.ok) throw new Error('Failed to fetch courses');
         const data = await res.json();
         setCourses(data);

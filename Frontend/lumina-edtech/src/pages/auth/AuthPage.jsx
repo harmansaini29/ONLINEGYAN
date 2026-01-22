@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff, ChevronLeft, Github, Chrome, CheckCircle, AlertCircle, Loader2, GraduationCap, Presentation } from "lucide-react";
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const API_BASE_URL = "http://localhost:9000/api"; 
-
+import { API_BASE_URL } from '../../config';
 // --- COMPONENTS ---
 const InputField = ({ label, type, icon: Icon, id, error, ...props }) => {
   const [showPassword, setShowPassword] = useState(false);

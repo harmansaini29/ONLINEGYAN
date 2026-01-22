@@ -1,116 +1,133 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { CreditCard, Wallet, ShieldCheck, Zap, CheckCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { API_BASE_URL } from '../../config';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { CreditCard, CheckCircle, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from '../../config'; // ✅ Import Config
 
-const CreditPackage = ({ amount, bonus, onSelect, loading }) => (
-    <motion.button
-        whileHover={{ scale: 1.02, translateY: -5 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => onSelect(amount)}
-        disabled={loading}
-        className="relative group p-6 rounded-3xl bg-[#13141f] border border-white/10 hover:border-indigo-500/50 transition-all text-left flex flex-col h-full"
-    >
-        {bonus && (
-            <div className="absolute -top-3 left-6 px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full text-[10px] font-bold text-black uppercase tracking-wider shadow-lg">
-                {bonus} Bonus
-            </div>
-        )}
-        <div className="mb-4 p-3 bg-white/5 rounded-2xl w-fit group-hover:bg-indigo-500/20 transition-colors">
-            <Zap size={24} className="text-indigo-400" />
-        </div>
-        <div className="mb-1 text-gray-400 text-sm font-medium">Add Credits</div>
-        <div className="text-3xl font-bold text-white mb-4">${amount}</div>
-        <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between w-full">
-            <span className="text-xs text-gray-500">Instant Transfer</span>
-            <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-all">
-                <CreditCard size={12} />
-            </div>
-        </div>
-    </motion.button>
-);
+const PACKAGES = [
+  { amount: 100, price: 100, label: "Starter" },
+  { amount: 500, price: 500, label: "Pro" },
+  { amount: 1000, price: 1000, label: "Business" },
+  { amount: 5000, price: 5000, label: "Enterprise" },
+];
 
 export default function RefillCredits() {
-    const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
+  const [selectedAmount, setSelectedAmount] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("idle"); // idle | success | error
+  const [msg, setMsg] = useState("");
 
-    const handleRefill = async (amount) => {
-        setLoading(true);
-        const token = localStorage.getItem("token");
+  const handlePayment = async () => {
+    if (!selectedAmount) return;
+    setLoading(true);
+    setStatus("idle");
 
-        try {
-            const res = await fetch(`${API_BASE_URL}/wallet/refill`, {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({ amount })
-            });
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Please log in first");
 
-            if (res.ok) {
-                // Simulate Payment Gateway Delay
-                setTimeout(() => {
-                    setSuccess(true);
-                    setLoading(false);
-                    // Refresh window to show new balance in Navbar
-                    setTimeout(() => {
-                        window.location.reload(); 
-                    }, 2000);
-                }, 1500);
-            }
-        } catch (err) {
-            console.error(err);
-            setLoading(false);
-        }
-    };
+      // ✅ FIXED: Use API_BASE_URL + Correct Endpoint
+      const res = await fetch(`${API_BASE_URL}/wallet/refill`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ amount: selectedAmount })
+      });
 
-    if (success) {
-        return (
-            <div className="min-h-[80vh] flex flex-col items-center justify-center text-center p-6">
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-[0_0_50px_rgba(16,185,129,0.4)]">
-                    <CheckCircle size={48} className="text-white" />
-                </motion.div>
-                <h2 className="text-3xl font-bold text-white mb-2">Payment Successful!</h2>
-                <p className="text-gray-400 mb-8">Your wallet has been recharged. Redirecting...</p>
-            </div>
-        );
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.msg || "Payment Failed");
+
+      setStatus("success");
+      setMsg(`Successfully added $${selectedAmount} to wallet!`);
+      
+      // ✅ FIXED: Navigate to the correct Learner Dashboard (Marketplace)
+      // Wait 2 seconds so user sees the success message, then redirect
+      setTimeout(() => {
+         navigate('/learner/marketplace'); 
+      }, 2000);
+
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+      setMsg(err.message || "Transaction failed. Try again.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    return (
-        <div className="max-w-5xl mx-auto p-6 pt-12">
-            {/* Disclaimer Banner */}
-            <div className="mb-10 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center gap-4 text-indigo-300 text-sm">
-                <ShieldCheck size={20} />
-                <p><strong>Demo Mode:</strong> This is a simulation. No real money will be deducted from your bank account. Use these credits to test the platform.</p>
-            </div>
+  return (
+    <div className="min-h-screen bg-[#05060A] p-6 md:p-12 text-white font-sans flex items-center justify-center relative overflow-hidden">
+       {/* Background Glow */}
+       <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px]" />
+       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px]" />
 
-            <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold text-white mb-4">Top Up Wallet</h1>
-                <p className="text-gray-400 max-w-xl mx-auto">Securely add funds to your OnlineGyan wallet to purchase courses instantly.</p>
-            </div>
+       <div className="relative z-10 w-full max-w-2xl">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition-colors">
+              <ArrowLeft size={20} /> Back
+          </button>
 
-            {loading ? (
-                <div className="h-64 flex flex-col items-center justify-center">
-                    <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
-                    <p className="text-gray-400 animate-pulse">Processing Secure Transaction...</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <CreditPackage amount={100} onSelect={handleRefill} loading={loading} />
-                    <CreditPackage amount={500} bonus="10%" onSelect={handleRefill} loading={loading} />
-                    <CreditPackage amount={1000} bonus="20%" onSelect={handleRefill} loading={loading} />
-                    <CreditPackage amount={5000} bonus="Whale" onSelect={handleRefill} loading={loading} />
-                </div>
-            )}
+          <div className="bg-[#0F1016]/80 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+              <div className="text-center mb-8">
+                  <div className="inline-block p-3 bg-indigo-500/10 rounded-2xl mb-4 text-indigo-400">
+                      <CreditCard size={32} />
+                  </div>
+                  <h1 className="text-3xl font-bold mb-2">Top Up Wallet</h1>
+                  <p className="text-gray-400">Secure simulated payment gateway</p>
+              </div>
 
-            <div className="mt-16 flex justify-center gap-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-                 <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" className="h-8" alt="Visa" />
-                 <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" className="h-8" alt="Mastercard" />
-                 <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" className="h-8" alt="Paypal" />
-            </div>
-        </div>
-    );
+              {/* Status Messages */}
+              {status === 'error' && (
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400">
+                      <AlertCircle size={20} /> {msg}
+                  </motion.div>
+              )}
+              {status === 'success' && (
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3 text-emerald-400">
+                      <CheckCircle size={20} /> {msg}
+                  </motion.div>
+              )}
+
+              {/* Credit Packages */}
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                  {PACKAGES.map((pkg) => (
+                      <button
+                          key={pkg.amount}
+                          onClick={() => setSelectedAmount(pkg.amount)}
+                          className={`p-4 rounded-xl border transition-all text-left group relative overflow-hidden
+                              ${selectedAmount === pkg.amount 
+                                  ? "bg-indigo-600 border-indigo-500 shadow-lg shadow-indigo-500/20" 
+                                  : "bg-[#1A1B26] border-white/5 hover:border-white/20"}
+                          `}
+                      >
+                          <p className={`text-sm font-medium mb-1 ${selectedAmount === pkg.amount ? "text-indigo-200" : "text-gray-400"}`}>{pkg.label}</p>
+                          <p className="text-2xl font-bold">${pkg.amount}</p>
+                          {selectedAmount === pkg.amount && <div className="absolute top-2 right-2 text-white"><CheckCircle size={16} /></div>}
+                      </button>
+                  ))}
+              </div>
+
+              {/* Disclaimer */}
+              <div className="bg-yellow-500/5 border border-yellow-500/10 p-4 rounded-xl mb-8 flex items-start gap-3">
+                   <AlertCircle size={18} className="text-yellow-500 mt-0.5 shrink-0" />
+                   <p className="text-xs text-yellow-500/80 leading-relaxed">
+                       <strong>Demo Mode:</strong> This is a simulation. No real money will be deducted from your bank account. The selected amount will be added to your virtual wallet immediately.
+                   </p>
+              </div>
+
+              {/* Action Button */}
+              <button 
+                  onClick={handlePayment}
+                  disabled={!selectedAmount || loading || status === 'success'}
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-lg shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                  {loading ? <><Loader2 className="animate-spin" size={20} /> Processing...</> : "Confirm Payment"}
+              </button>
+          </div>
+       </div>
+    </div>
+  );
 }

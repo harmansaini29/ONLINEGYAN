@@ -5,13 +5,20 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import { API_BASE_URL } from '../../config';
 
-const InputField = ({ label, type, icon: Icon, id, error, ...props }) => {
+// --- FIXED INPUT FIELD COMPONENT ---
+const InputField = ({ label, type, icon: Icon, id, error, onChange, value, ...props }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [hasValue, setHasValue] = useState(false);
+  // Ensure the label floats if there is a value (even from autofill)
+  const hasValue = value && value.length > 0;
   
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
+
+  // Combine internal and external change handlers
+  const handleChange = (e) => {
+      if (onChange) onChange(e);
+  };
 
   return (
     <div className="relative mb-5 group">
@@ -22,16 +29,15 @@ const InputField = ({ label, type, icon: Icon, id, error, ...props }) => {
       <input
         type={inputType}
         id={id}
+        value={value} // Controlled component
         onFocus={() => setIsFocused(true)}
-        onBlur={(e) => {
-            setIsFocused(false);
-            setHasValue(e.target.value.length > 0);
-        }}
-        onChange={(e) => setHasValue(e.target.value.length > 0)}
+        onBlur={() => setIsFocused(false)}
+        onChange={handleChange}
         className={`w-full bg-[#0F1016]/60 border rounded-xl py-4 pl-12 pr-12 text-white placeholder-transparent focus:outline-none transition-all duration-300 backdrop-blur-sm
             ${error ? "border-red-500/50 focus:border-red-500" : isFocused ? "border-indigo-500/50 shadow-[0_0_20px_rgba(99,102,241,0.1)]" : "border-white/10 hover:border-white/20"}
         `}
         placeholder={label}
+        autoComplete={id === "password" ? "current-password" : "on"}
         required
         {...props}
       />
@@ -136,36 +142,34 @@ export default function AuthPage() {
       handleRedirect(data.user.role);
   }
 
-  // --- ROBUST AUTH HANDLER (UPDATED) ---
+  // --- AUTH HANDLER ---
   const handleAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     setSuccess("");
 
-    // 1. Critical Config Check
     if (!API_BASE_URL) {
-        setError("System Error: API Configuration is missing. Check config.js");
+        setError("Configuration Error: API URL missing in config.js");
         setLoading(false);
         return;
     }
 
-    // Artificial delay for UX smoothness
     await new Promise(r => setTimeout(r, 800)); 
 
     const endpoint = isLogin ? "/auth/login" : "/auth/register";
-    
-    // 2. Safe URL Construction (Removes potential trailing slash from API_BASE_URL)
     const baseUrl = API_BASE_URL.replace(/\/$/, '');
     const url = `${baseUrl}${endpoint}`;
 
+    // Trim spaces from email to prevent accidental errors
+    const cleanEmail = formData.email.trim();
+
     const payload = isLogin 
-        ? { email: formData.email, password: formData.password }
-        : { name: formData.name, email: formData.email, password: formData.password, role: userType };
+        ? { email: cleanEmail, password: formData.password }
+        : { name: formData.name, email: cleanEmail, password: formData.password, role: userType };
 
     try {
-        console.log(`📡 Connecting to: ${url}`); // Helpful for debugging
-
+        console.log(`📡 Sending request to: ${url}`);
         const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -174,28 +178,26 @@ export default function AuthPage() {
 
         const data = await res.json();
         
-        // 3. Handle Non-200 Responses Gracefully
         if (!res.ok) {
             throw new Error(data.msg || data.error || `Error ${res.status}: Authentication failed`);
         }
 
         if (isLogin) {
-            // 4. Role Integrity Check
             if (data.user.role !== userType) {
-                if(!confirm(`⚠️ Account found, but you are a "${data.user.role}", not a "${userType}".\n\nSwitch to your correct dashboard?`)) {
-                     throw new Error("Login cancelled. Please choose the correct role.");
+                const proceed = confirm(`⚠️ Account Found!\n\nYou are registered as a "${data.user.role}", but you are on the "${userType}" login page.\n\nClick OK to switch to your correct dashboard.`);
+                if(!proceed) {
+                     throw new Error("Login cancelled. Please use the correct role.");
                 }
             }
             processLoginSuccess(data);
         } else {
             setIsLogin(true);
-            setSuccess(`Welcome ${userType}! Account created successfully. Please log in.`);
+            setSuccess(`Welcome ${userType}! Account created. Please log in.`);
             setFormData({ ...formData, password: "" }); 
         }
     } catch (err) {
         console.error("Auth Error:", err);
-        // Display a user-friendly error message
-        setError(err.message || "Failed to connect to server. Please check your internet connection.");
+        setError(err.message || "Failed to connect. Check internet.");
     } finally {
         setLoading(false);
     }
@@ -248,7 +250,6 @@ export default function AuthPage() {
          <div className="flex-1 flex items-center justify-center p-6 relative z-10">
              <AnimatePresence mode="wait">
                  {view === 'selection' ? (
-                     // --- ROLE SELECTION VIEW ---
                      <motion.div 
                         key="selection"
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -272,7 +273,6 @@ export default function AuthPage() {
                         />
                      </motion.div>
                  ) : (
-                     // --- LOGIN FORM VIEW ---
                      <motion.div 
                         key="form"
                         initial={{ opacity: 0, x: 20 }}
@@ -288,14 +288,13 @@ export default function AuthPage() {
                          </div>
 
                          <div className="bg-[#12141C]/50 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
-                            {/* Alerts */}
                             {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg flex items-center gap-2"><AlertCircle size={16} /> {error}</div>}
                             {success && <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm rounded-lg flex items-center gap-2"><CheckCircle size={16} /> {success}</div>}
 
                             <form onSubmit={handleAuth} className="space-y-1">
-                                {!isLogin && <InputField id="name" label="Full Name" type="text" icon={User} onChange={handleChange} />}
-                                <InputField id="email" label="Email Address" type="email" icon={Mail} onChange={handleChange} />
-                                <InputField id="password" label="Password" type="password" icon={Lock} onChange={handleChange} />
+                                {!isLogin && <InputField id="name" label="Full Name" type="text" icon={User} onChange={handleChange} value={formData.name} />}
+                                <InputField id="email" label="Email Address" type="email" icon={Mail} onChange={handleChange} value={formData.email} />
+                                <InputField id="password" label="Password" type="password" icon={Lock} onChange={handleChange} value={formData.password} />
 
                                 <button type="submit" disabled={loading} className="w-full py-4 mt-6 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-lg shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                                     {loading ? <><Loader2 className="animate-spin" size={20} /> Processing...</> : <>{isLogin ? "Log In" : "Sign Up"} <ArrowRight size={20} /></>}

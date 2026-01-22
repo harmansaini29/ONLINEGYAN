@@ -2,7 +2,6 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// 1. REGISTER
 exports.register = async (req, res) => {
     const { name, email, password, role } = req.body;
     try {
@@ -12,13 +11,11 @@ exports.register = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Give $1000 Signup Bonus
         const [result] = await db.execute(
             'INSERT INTO users (name, email, password, role, wallet_balance) VALUES (?, ?, ?, ?, 1000.00)',
             [name, email, hashedPassword, role]
         );
 
-        // Log Bonus Transaction
         await db.execute(
             'INSERT INTO transactions (user_id, amount, type, description) VALUES (?, ?, ?, ?)',
             [result.insertId, 1000.00, 'credit', 'Welcome Bonus']
@@ -30,7 +27,6 @@ exports.register = async (req, res) => {
     }
 };
 
-// 2. LOGIN
 exports.login = async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -58,7 +54,6 @@ exports.login = async (req, res) => {
     }
 };
 
-// 3. GET ME
 exports.getMe = async (req, res) => {
     try {
         const [users] = await db.execute(
@@ -72,7 +67,6 @@ exports.getMe = async (req, res) => {
     }
 };
 
-// 4. SOCIAL LOGIN (FIXED)
 exports.socialLogin = async (req, res) => {
     const { provider } = req.body; 
 
@@ -95,15 +89,12 @@ exports.socialLogin = async (req, res) => {
         
         let user;
         if (users.length > 0) {
-            // LOGIN EXISTING USER (Respect their existing role!)
             user = users[0];
         } else {
-            // REGISTER NEW USER
             const randomPassword = Math.random().toString(36).slice(-8);
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(randomPassword, salt);
 
-            // Default social login users to 'learner'
             const [result] = await db.execute(
                 'INSERT INTO users (name, email, password, role, wallet_balance, avatar) VALUES (?, ?, ?, ?, 1000.00, ?)',
                 [name, email, hashedPassword, 'learner', avatar]
@@ -124,7 +115,7 @@ exports.socialLogin = async (req, res) => {
             user: { 
                 id: user.id, 
                 name: user.name, 
-                role: user.role, // This will now correctly return 'instructor' if they are one
+                role: user.role, 
                 avatar: user.avatar,
                 wallet_balance: user.wallet_balance
             } 

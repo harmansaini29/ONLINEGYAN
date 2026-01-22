@@ -2,9 +2,8 @@ const db = require('../config/db');
 
 exports.getInstructorStats = async (req, res) => {
     try {
-        const instructorId = req.user.id; // Got from Auth Middleware
+        const instructorId = req.user.id; 
 
-        // 1. Calculate Total Real Revenue (Sum of all enrollments for this instructor's courses)
         const [revenueData] = await db.execute(
             `SELECT SUM(e.amount_paid) as total_revenue
              FROM enrollments e
@@ -13,7 +12,6 @@ exports.getInstructorStats = async (req, res) => {
             [instructorId]
         );
 
-        // 2. Count Unique Students
         const [studentsData] = await db.execute(
             `SELECT COUNT(DISTINCT e.user_id) as total_students
              FROM enrollments e
@@ -25,7 +23,7 @@ exports.getInstructorStats = async (req, res) => {
         res.json({
             revenue: revenueData[0].total_revenue || 0,
             students: studentsData[0].total_students || 0,
-            rating: 4.9 // You can calculate average rating here later
+            rating: 4.9 
         });
     } catch (err) {
         console.error(err);

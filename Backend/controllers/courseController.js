@@ -1,32 +1,26 @@
 const db = require('../config/db');
 
-// --- HELPER: Detect correct Server URL (Local vs Production) ---
 const getBaseUrl = (req) => {
-    // Railway automatically sets this variable in production
     if (process.env.RAILWAY_PUBLIC_DOMAIN) {
         return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
     }
-    // Fallback for localhost (e.g., http://localhost:9000)
     return `${req.protocol}://${req.get('host')}`;
 };
 
-// 1. Create Course (Initial Setup)
 exports.createCourse = async (req, res) => {
     const { title, category, price, description } = req.body;
     const instructorId = req.user.id;
     const baseUrl = getBaseUrl(req);
 
-    // Get File Paths from Multer (Dynamic URL)
     const thumbnailPath = req.files['thumbnail'] 
         ? `${baseUrl}/uploads/${req.files['thumbnail'][0].filename}` 
         : "https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=800&q=80";
     
     const videoPath = req.files['video'] 
         ? `${baseUrl}/uploads/${req.files['video'][0].filename}`
-        : "https://www.youtube.com/embed/dQw4w9WgXcQ"; // Fallback
+        : "https://www.youtube.com/embed/dQw4w9WgXcQ"; 
 
     try {
-        // Insert Course
         const [result] = await db.execute(
             `INSERT INTO courses (instructor_id, title, category, price, description, thumbnail, is_published) 
              VALUES (?, ?, ?, ?, ?, ?, true)`,
@@ -35,13 +29,11 @@ exports.createCourse = async (req, res) => {
         
         const courseId = result.insertId;
 
-        // Create Default Module
         const [modResult] = await db.execute(
             'INSERT INTO modules (course_id, title, sort_order) VALUES (?, ?, ?)',
             [courseId, "Introduction", 1]
         );
 
-        // Create First Lesson
         await db.execute(
             'INSERT INTO lessons (module_id, title, video_url, duration, sort_order) VALUES (?, ?, ?, ?, ?)',
             [modResult.insertId, "Welcome to the Course", videoPath, "05:00", 1]
@@ -54,24 +46,20 @@ exports.createCourse = async (req, res) => {
     }
 };
 
-// 2. Add Lesson (NEW FEATURE)
 exports.addLesson = async (req, res) => {
     const { courseId, moduleId, title, duration } = req.body;
     const baseUrl = getBaseUrl(req);
     
-    // Handle video upload if present, else use provided URL
     const videoPath = req.files && req.files['video'] 
         ? `${baseUrl}/uploads/${req.files['video'][0].filename}`
         : req.body.videoUrl || ""; 
 
     try {
-        // Verify ownership
         const [course] = await db.execute('SELECT instructor_id FROM courses WHERE id = ?', [courseId]);
         if (course.length === 0 || course[0].instructor_id !== req.user.id) {
             return res.status(403).json({ msg: "Not authorized" });
         }
 
-        // Get max sort order to append to end
         const [maxSort] = await db.execute('SELECT MAX(sort_order) as maxOrder FROM lessons WHERE module_id = ?', [moduleId]);
         const nextOrder = (maxSort[0].maxOrder || 0) + 1;
 
@@ -86,7 +74,6 @@ exports.addLesson = async (req, res) => {
     }
 };
 
-// 3. Get All Courses
 exports.getAllCourses = async (req, res) => {
     try {
         const [courses] = await db.execute(
@@ -101,7 +88,6 @@ exports.getAllCourses = async (req, res) => {
     }
 };
 
-// 4. Get Course Details (with Modules & Lessons)
 exports.getCourseDetails = async (req, res) => {
     try {
         const { id } = req.params;

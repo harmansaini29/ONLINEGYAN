@@ -48,9 +48,17 @@ export default function CourseCard({ course, index }) {
                 body: JSON.stringify({ courseId: course.id })
             });
             
+            const data = await res.json(); // Get response data
+
             if (res.ok) {
                 setIsEnrolled(true); // Update UI instantly
                 alert(`Successfully enrolled in ${course.title}!`);
+                
+                // 🔥 CRITICAL FIX: Tell Navbar to update wallet balance instantly
+                window.dispatchEvent(new Event("walletUpdated")); 
+            } else {
+                // Show error (e.g., "Insufficient funds")
+                alert(data.msg || "Enrollment failed. Please check your wallet balance.");
             }
         } catch (err) {
             alert("Enrollment failed. Please try again.");

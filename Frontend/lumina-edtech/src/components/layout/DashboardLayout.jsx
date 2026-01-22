@@ -1,19 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, LogOut, Menu, X } from "lucide-react";
+import { Bell, LogOut, Menu, Wallet } from "lucide-react";
 import { INSTRUCTOR_SIDEBAR, LEARNER_SIDEBAR } from "../../data/mockData"; 
+import { API_BASE_URL } from '../../config';
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const [user, setUser] = useState({ name: "User", role: "learner", avatar: "" });
+  const [balance, setBalance] = useState(0); // Add Balance State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // 1. Load Real User Data on Mount
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
         setUser(JSON.parse(storedUser));
+        
+        // Fetch Fresh Balance
+        const token = localStorage.getItem("token");
+        if (token) {
+            fetch(`${API_BASE_URL}/auth/me`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.wallet_balance !== undefined) setBalance(data.wallet_balance);
+            })
+            .catch(console.error);
+        }
     }
   }, []);
 
@@ -21,11 +35,10 @@ export default function DashboardLayout() {
   const sidebarItems = role === 'instructor' ? INSTRUCTOR_SIDEBAR : LEARNER_SIDEBAR;
 
   const handleLogout = () => {
-    localStorage.clear(); // Clear everything
+    localStorage.clear();
     navigate('/');
   };
 
-  // Sidebar Component (Reused for Desktop & Mobile)
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
         <div className="h-24 flex items-center px-8 cursor-pointer" onClick={() => navigate('/')}>
@@ -42,7 +55,7 @@ export default function DashboardLayout() {
             <NavLink 
               key={item.path}
               to={item.path}
-              onClick={() => setIsMobileMenuOpen(false)} // Close on mobile click
+              onClick={() => setIsMobileMenuOpen(false)}
               className={({ isActive }) => `flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 relative group overflow-hidden ${
                 isActive ? "text-white" : "text-gray-400 hover:text-white"
               }`}
@@ -64,10 +77,7 @@ export default function DashboardLayout() {
             </NavLink>
           ))}
           
-          <button 
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors mt-4"
-          >
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors mt-4">
             <LogOut size={20} />
             <span className="font-medium text-sm">Sign Out</span>
           </button>
@@ -78,12 +88,12 @@ export default function DashboardLayout() {
   return (
     <div className="min-h-screen bg-transparent text-white font-sans flex overflow-hidden selection:bg-indigo-500/30">
       
-      {/* --- DESKTOP SIDEBAR (Hidden on Mobile) --- */}
+      {/* Desktop Sidebar */}
       <aside className="w-72 border-r border-white/5 bg-[#030014]/50 backdrop-blur-xl hidden lg:flex flex-col relative z-20">
         <SidebarContent />
       </aside>
 
-      {/* --- MOBILE SIDEBAR (Drawer) --- */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {isMobileMenuOpen && (
             <>
@@ -102,25 +112,24 @@ export default function DashboardLayout() {
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative bg-transparent">
-        {/* Header */}
         <header className="h-20 flex items-center justify-between px-6 z-10 border-b border-white/5 bg-[#030014]/30 backdrop-blur-sm">
-          {/* Mobile Toggle Button */}
-          <button 
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="lg:hidden p-2 text-gray-400 hover:text-white"
-          >
+          <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-2 text-gray-400 hover:text-white">
             <Menu size={24} />
           </button>
 
-          <div className="flex items-center justify-end w-full gap-6">
+          <div className="flex items-center justify-end w-full gap-4 sm:gap-6">
+             {/* ✅ WALLET ADDED TO DASHBOARD HEADER */}
+             <div className="flex items-center gap-2 px-3 py-1.5 bg-[#13141f] border border-white/10 rounded-xl shadow-inner">
+                <div className="p-1 bg-emerald-500/20 rounded-md"><Wallet size={14} className="text-emerald-400" /></div>
+                <span className="text-sm text-white font-bold">${balance}</span>
+             </div>
+
              <button className="relative text-gray-400 hover:text-white transition-colors">
                <Bell size={20} />
                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-[#0B0C15]" />
              </button>
              
-             {/* REAL USER INFO DISPLAY */}
              <div className="flex items-center gap-3 pl-6 border-l border-white/5">
                 <div className="text-right hidden md:block">
                    <p className="text-sm font-bold text-white">{user.name}</p>
